@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Eco_plate</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="welcome_title">Welcome to</string>
+    <string name="welcome_description">Your eco-friendly companion for sustainable living!</string>
+    <string name="get_started">Get Started</string>
+    <string name="app_icon_description">Eco Plate App Icon</string>
+</resources>
