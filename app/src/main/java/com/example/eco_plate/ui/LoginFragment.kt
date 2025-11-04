@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.Toast
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -16,6 +17,8 @@ import com.example.eco_plate.WelcomeActivity
 import com.example.eco_plate.WelcomeViewModel
 import com.example.eco_plate.databinding.FragmentLoginBinding
 import androidx.core.content.edit
+import androidx.navigation.fragment.findNavController
+import com.example.eco_plate.R
 
 class LoginFragment : Fragment() {
 
@@ -56,9 +59,7 @@ class LoginFragment : Fragment() {
         }
 
         // Password
-        viewModel.loginPassword.observe(viewLifecycleOwner) { loginPassword ->
-            passwordET.setText(loginPassword)
-        }
+
         passwordET.doAfterTextChanged { text ->
             val passwordString = text?.toString().orEmpty()
             if (viewModel.loginPassword.value != passwordString) viewModel.setLoginPassword(passwordString)
@@ -78,11 +79,19 @@ class LoginFragment : Fragment() {
         // Buttons
         loginBTN.setOnClickListener {
             // Need to confirm password is correct
-            (requireActivity() as WelcomeActivity).goToMain()
+            viewModel.login()
         }
 
         signupBTN.setOnClickListener {
             (requireActivity() as WelcomeActivity).goToSignup()
+        }
+
+        viewModel.loginResult.observe(viewLifecycleOwner){ result ->
+            if (result.success) {
+                (requireActivity() as WelcomeActivity).goToMain()
+            } else {
+                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+            }
         }
 
     }

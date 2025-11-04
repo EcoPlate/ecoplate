@@ -6,14 +6,25 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.eco_plate.data.AuthorizationRepository
+import com.example.eco_plate.data.LoginResult
+import com.example.eco_plate.data.TestAuthorizationRepo
 
 class WelcomeViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val repo : AuthorizationRepository = TestAuthorizationRepo()
     private val preferences = application.getSharedPreferences("login_prefs", Context.MODE_PRIVATE)
     private var _loginEmail = MutableLiveData<String>("")
     private var _loginPassword = MutableLiveData<String>("")
     private var _confirmPassword = MutableLiveData<String>("")
 
+    // Repo
+    private val _loginResult = MutableLiveData<LoginResult>()
+    val loginResult: LiveData<LoginResult> get() = _loginResult
+    private val _signupResult = MutableLiveData<LoginResult>()
+    val signupResult: LiveData<LoginResult> get() = _signupResult
+
+    // LiveData
     val loginEmail: LiveData<String> get() = _loginEmail
     val loginPassword: LiveData<String> get() = _loginPassword
     val confirmPassword: LiveData<String> get() = _confirmPassword
@@ -47,5 +58,18 @@ class WelcomeViewModel(application: Application) : AndroidViewModel(application)
 
     fun setAccountType(value: String) {
         accountType.value = value
+    }
+
+    fun login(){
+        val email = _loginEmail.value.orEmpty()
+        val password = _loginPassword.value.orEmpty()
+        _loginResult.value =  repo.login(email, password)
+    }
+
+    fun signup(){
+        val email = _loginEmail.value.orEmpty()
+        val password = _loginPassword.value.orEmpty()
+        val type = accountType.value.orEmpty()
+        _loginResult.value = repo.signup(email, password, type)
     }
 }

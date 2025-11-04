@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -63,17 +64,11 @@ class SignupFragment : Fragment() {
             if (viewModel.loginEmail.value != emailString) viewModel.setLoginEmail(emailString)
         }
 
-        viewModel.loginPassword.observe(viewLifecycleOwner) { loginPassword ->
-            passwordET.setText(loginPassword)
-        }
         passwordET.doAfterTextChanged { text ->
             val passwordString = text?.toString().orEmpty()
             if (viewModel.loginPassword.value != passwordString) viewModel.setLoginPassword(passwordString)
         }
 
-        viewModel.confirmPassword.observe(viewLifecycleOwner) { confirmPassword ->
-            passwordET.setText(confirmPassword)
-        }
         passwordET.doAfterTextChanged { text ->
             val passwordString = text?.toString().orEmpty()
             if (viewModel.loginPassword.value != passwordString) viewModel.setLoginPassword(passwordString)
@@ -112,7 +107,15 @@ class SignupFragment : Fragment() {
         }
 
         createAccountBTN.setOnClickListener {
-            (requireActivity() as WelcomeActivity).goToMain()
+            viewModel.signup()
+        }
+
+        viewModel.signupResult.observe(viewLifecycleOwner){ result ->
+            if (result.success) {
+                (requireActivity() as WelcomeActivity).goToMain()
+            } else {
+                Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

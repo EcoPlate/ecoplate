@@ -26,7 +26,9 @@ class WelcomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_welcome)
         fragmentManager = supportFragmentManager
 
-        showFragment(WELCOME) { WelcomeFragment() }
+        if (savedInstanceState == null) {
+            showFragment(WELCOME) { WelcomeFragment() }
+        }
     }
 
     fun goToMain(){
