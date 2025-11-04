@@ -1,30 +1,47 @@
 package com.example.eco_plate
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.FrameLayout
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import com.example.eco_plate.ui.LoginFragment
+import com.example.eco_plate.ui.SignupFragment
 import com.example.eco_plate.ui.WelcomeFragment
 
 class WelcomeActivity : AppCompatActivity() {
 
-    private lateinit var fragmentContainer: FrameLayout
     private lateinit var fragmentManager: FragmentManager
+    private val viewModel: WelcomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_welcome)
 
+        if(viewModel.hasSavedLogin){
+            goToMain()
+            return
+        }
+
+        setContentView(R.layout.activity_welcome)
         fragmentManager = supportFragmentManager
 
-        fragmentContainer = findViewById<FrameLayout>(R.id.welcome_fragment_container)
-
-        showFragment(WELCOME) {
-            WelcomeFragment()
-        }
+        showFragment(WELCOME) { WelcomeFragment() }
     }
 
+    fun goToMain(){
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+        return
+    }
+
+    fun goToLogin(){
+        showFragment(LOGIN) { LoginFragment() }
+    }
+
+    fun goToSignup(){
+        showFragment(SIGNUP) { SignupFragment() }
+    }
     private fun showFragment(tag: String, createLambda: () -> Fragment) {
         val transactionManager = fragmentManager.beginTransaction()
 
@@ -50,23 +67,3 @@ class WelcomeActivity : AppCompatActivity() {
         private const val SIGNUP = "signup"
     }
 }
-
-
-/*private lateinit var binding: ActivityWelcomeBinding
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityWelcomeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.btnGetStarted.setOnClickListener {
-            navigateToMainActivity()
-        }
-    }
-
-    private fun navigateToMainActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-        finish()
-    }*/

@@ -7,4 +7,17 @@
     <string name="welcome_description">Your eco-friendly companion for sustainable living!</string>
     <string name="get_started">Get Started</string>
     <string name="app_icon_description">Eco Plate App Icon</string>
+    <string name="login_to">Login to</string>
+    <string name="email">Email:</string>
+    <string name="password">Password:</string>
+    <string name="something_you_won_t_forget">Something you won\'t forget!</string>
+    <string name="login">Login</string>
+    <string name="email_hint">someone@somewhere.com</string>
+    <string name="password_hint">Something secret!</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="remember_me">Remember me</string>
+    <string name="create_account">Create Account</string>
+    <string name="signup_for">Signup for</string>
+    <string name="Confirm_password">Confirm Password:</string>
+    <string name="account_type">Account Type:</string>
 </resources>
