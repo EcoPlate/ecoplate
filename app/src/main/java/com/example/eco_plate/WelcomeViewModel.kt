@@ -12,9 +12,12 @@ class WelcomeViewModel(application: Application) : AndroidViewModel(application)
     private val preferences = application.getSharedPreferences("login_prefs", Context.MODE_PRIVATE)
     private var _loginEmail = MutableLiveData<String>("")
     private var _loginPassword = MutableLiveData<String>("")
+    private var _confirmPassword = MutableLiveData<String>("")
 
     val loginEmail: LiveData<String> get() = _loginEmail
     val loginPassword: LiveData<String> get() = _loginPassword
+    val confirmPassword: LiveData<String> get() = _confirmPassword
+    val accountType = MutableLiveData<String>()
     val isRemembered: Boolean get() = preferences.getBoolean("remember_me", false)
     val hasSavedLogin: Boolean get() = isRemembered && !getSavedEmail().isNullOrBlank()
 
@@ -40,5 +43,9 @@ class WelcomeViewModel(application: Application) : AndroidViewModel(application)
 
     fun setLoginPassword(value: String) {
         _loginPassword.value = value
+    }
+
+    fun setAccountType(value: String) {
+        accountType.value = value
     }
 }
