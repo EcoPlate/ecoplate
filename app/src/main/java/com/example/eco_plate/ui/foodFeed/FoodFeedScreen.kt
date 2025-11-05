@@ -57,6 +57,7 @@ fun FoodFeedScreen(viewModel: FoodFeedViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .padding(top= 80.dp)
         )
 
         // List

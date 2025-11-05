@@ -7,6 +7,11 @@
         android:title="Food Feed" />
 
     <item
+        android:id="@+id/navigation_pantry"
+        android:icon="@drawable/outline_brunch_dining_24"
+        android:title="Pantry" />
+
+    <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/twotone_category_24"
         android:title="Categories" />

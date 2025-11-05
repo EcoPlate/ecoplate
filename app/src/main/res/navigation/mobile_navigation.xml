@@ -27,4 +27,9 @@
         android:id="@+id/navigation_food_feed"
         android:name="com.example.eco_plate.ui.foodFeed.FoodFeedFragment"
         android:label="Food Feed" />
+
+    <fragment
+        android:id="@+id/navigation_pantry"
+        android:name="com.example.eco_plate.ui.pantry.PantryFragment"
+        android:label="Pantry" />
 </navigation>
