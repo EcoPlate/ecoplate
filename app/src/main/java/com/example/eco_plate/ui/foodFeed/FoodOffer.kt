@@ -7,5 +7,5 @@ data class FoodOffer (
     val title: String,
     val description: String,
     val location: GeoPoint
-    //add expiry date etc
+    //add expiry date, distance from me etc
 )

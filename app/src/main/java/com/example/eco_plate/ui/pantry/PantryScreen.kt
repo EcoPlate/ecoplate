@@ -1,16 +1,16 @@
 package com.example.eco_plate.ui.pantry
 
-import android.R.attr.onClick
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -33,23 +34,42 @@ import java.util.UUID
 fun PantryScreen(viewModel: PantryViewModel) {
     val items by viewModel.items.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+
+    //sort temporary items
     val sortedItems = remember(items) {
         items.sortedBy { it.expiryDate }
     }
-    Column(Modifier.fillMaxSize().padding(8.dp)) {
 
-        Button(onClick = { showDialog = true }, modifier = Modifier.padding(bottom = 8.dp, top= 80.dp)) {
+
+    Column(Modifier
+        .fillMaxSize()
+        .padding(top=80.dp, bottom= 90.dp)) {
+        //Add item button
+        Button(
+            onClick = { showDialog = true },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
             Text("Add Item")
         }
-
+        //Column to show items (creates pantry item card for each item)
         LazyColumn {
             items(sortedItems) { item ->
-                PantryItemCard(item)
+                PantryItemCard(
+                    item,
+                    onDelete = { viewModel.removeItem(item) },
+                    onGiveAway = {
+                        // For now: just remove or print — later can integrate with FoodFeed
+                        println("Giving away: ${item.name}")
+                        viewModel.removeItem(item)
+                    }
+                )
             }
         }
     }
 
+
     if (showDialog) {
+        //call add pantry item dialog function
         AddPantryItemDialog(
             onDismiss = { showDialog = false },
             onAdd = { name, qty, expiry ->
@@ -68,7 +88,8 @@ fun PantryScreen(viewModel: PantryViewModel) {
 }
 
 @Composable
-fun PantryItemCard(item: PantryItem) {
+fun PantryItemCard(item: PantryItem,  onDelete: () -> Unit,  onGiveAway: () -> Unit) {
+
     val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
     val daysUntilExpiry = LocalDate.now().until(item.expiryDate).days
     val backgroundColor = when {
@@ -87,6 +108,24 @@ fun PantryItemCard(item: PantryItem) {
             Text(text = item.name, style = MaterialTheme.typography.titleMedium)
             Text(text = "Quantity: ${item.quantity}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Expires: ${item.expiryDate.format(formatter)}", style = MaterialTheme.typography.bodyMedium)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ){
+                Button(
+                    onClick = onGiveAway,
+                    //colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784))
+                ) {
+                    Text("Give Away")
+                }
+                Button(
+                    onClick = onDelete,
+                    //colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373))
+                ) {
+                    Text("Delete")
+                }
+            }
         }
     }
 }

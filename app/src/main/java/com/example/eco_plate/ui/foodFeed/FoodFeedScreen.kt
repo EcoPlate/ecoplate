@@ -28,7 +28,11 @@ fun FoodFeedScreen(viewModel: FoodFeedViewModel) {
         FoodOffer("2", "Tomatoes", "Extra ripe, free pickup", GeoPoint(49.27, -123.13))
     )
 
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top=90.dp)
+        ) {
         // Map
         AndroidView(
             factory = { context ->
@@ -57,10 +61,10 @@ fun FoodFeedScreen(viewModel: FoodFeedViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top= 80.dp)
+                .padding(top= 80.dp, bottom= 80.dp)
         )
 
-        // List
+        // List of items
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,6 +78,8 @@ fun FoodFeedScreen(viewModel: FoodFeedViewModel) {
         }
     }
 }
+
+//for each item in the list
 @Composable
 fun FoodOfferCard(offer: FoodOffer) {
     Card(
