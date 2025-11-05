@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/navigation_food_feed"
+        android:icon="@drawable/baseline_dynamic_feed_24"
+        android:title="Food Feed" />
+
+    <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/twotone_category_24"
         android:title="Categories" />
@@ -15,5 +20,7 @@
         android:id="@+id/navigation_notifications"
         android:icon="@drawable/outline_contacts_product_24"
         android:title="Profile" />
+
+
 
 </menu>
