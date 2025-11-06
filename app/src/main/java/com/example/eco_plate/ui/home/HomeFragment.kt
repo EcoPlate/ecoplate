@@ -4,53 +4,68 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.GridLayoutManager
-import com.example.eco_plate.R
-import com.example.eco_plate.databinding.FragmentHomeBinding
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import androidx.compose.material3.MaterialTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class HomeFragment : Fragment() {
-
-    private var _binding: FragmentHomeBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
+    
+    private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        setupRecycler()
-
-        return root
-    }
-
-    private fun setupRecycler() {
-        val categories = listOf(
-            Category("Vegetables", R.drawable.ic_launcher_foreground),
-            Category("Fruits", R.drawable.ic_launcher_foreground),
-            Category("Bread", R.drawable.ic_launcher_foreground),
-            Category("Sweets", R.drawable.ic_launcher_foreground),
-            Category("Meats", R.drawable.ic_launcher_foreground),
-            Category("Drinks", R.drawable.ic_launcher_foreground)
-        )
-
-        val adapter = CategoryAdapter(categories) { /* handle click later */ }
-        binding.rvCategories.layoutManager = GridLayoutManager(requireContext(), 2)
-        binding.rvCategories.adapter = adapter
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MaterialTheme {
+                            ModernHomeScreen(
+                                viewModel = homeViewModel,
+                                onNavigateToSearch = {
+                                    findNavController().navigate(
+                                        com.example.eco_plate.R.id.navigation_search
+                                    )
+                                },
+                                onNavigateToStore = { storeId ->
+                                    // Special case: if storeId is "map", navigate to map screen
+                                    if (storeId == "map") {
+                                        findNavController().navigate(
+                                            com.example.eco_plate.R.id.navigation_map
+                                        )
+                                    } else {
+                                        // Navigate to store detail
+                                        val bundle = Bundle().apply {
+                                            putString("storeId", storeId)
+                                        }
+                                        try {
+                                            findNavController().navigate(
+                                                com.example.eco_plate.R.id.navigation_store_detail, bundle
+                                            )
+                                        } catch (e: Exception) {
+                                            // If store detail not found, navigate to map
+                                            findNavController().navigate(
+                                                com.example.eco_plate.R.id.navigation_map
+                                            )
+                                        }
+                                    }
+                                },
+                                onNavigateToCategory = { categoryId ->
+                                    // TODO: Navigate to category screen
+                                },
+                                onNavigateToNotifications = {
+                                    // Navigate to notifications
+                                    findNavController().navigate(
+                                        com.example.eco_plate.R.id.navigation_notifications
+                                    )
+                                }
+                    )
+                }
+            }
+        }
     }
 }

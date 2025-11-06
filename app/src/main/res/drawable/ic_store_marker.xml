@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    
+    <!-- Map pin shape with store -->
+    <path
+        android:fillColor="#2BAE66"
+        android:pathData="M24,2C15.163,2 8,9.163 8,18c0,12 16,28 16,28s16,-16 16,-28C40,9.163 32.837,2 24,2z"/>
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,10c-4.418,0 -8,3.582 -8,8c0,4.418 3.582,8 8,8s8,-3.582 8,-8C32,13.582 28.418,10 24,10z"/>
+    
+    <!-- Store icon inside -->
+    <path
+        android:fillColor="#2BAE66"
+        android:pathData="M20,14h8v2h-8z"/>
+    
+    <path
+        android:fillColor="#2BAE66"
+        android:pathData="M19,16h10v6h-10z"/>
+    
+    <path
+        android:fillColor="#2BAE66"
+        android:pathData="M21,18h2v2h-2z"/>
+    
+    <path
+        android:fillColor="#2BAE66"
+        android:pathData="M25,18h2v2h-2z"/>
+</vector>

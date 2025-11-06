@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    
+    <!-- Delivery scooter/bike shape -->
+    <group>
+        <!-- Main body -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M24,4C24,4 20,4 16,8L16,20C16,24 20,28 24,28C28,28 32,24 32,20L32,8C28,4 24,4 24,4Z"/>
+        
+        <!-- White center for contrast -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M24,8C22,8 20,10 20,12L20,20C20,22 22,24 24,24C26,24 28,22 28,20L28,12C28,10 26,8 24,8Z"/>
+        
+        <!-- Delivery bag icon -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M22,12h4v2h-4z"/>
+        
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M21,14h6v6h-6z"/>
+        
+        <!-- Handle -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M23,11h2v2h-2z"/>
+        
+        <!-- Arrow pointing forward -->
+        <path
+            android:fillColor="#2BAE66"
+            android:pathData="M24,28L20,36L24,34L28,36Z"/>
+    </group>
+</vector>

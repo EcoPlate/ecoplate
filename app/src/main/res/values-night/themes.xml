@@ -1,16 +1,55 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.Eco_plate" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/black</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+    <!-- Base application theme for Dark Mode -->
+    <style name="Theme.Eco_plate" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary colors for dark theme -->
+        <item name="colorPrimary">@color/primary_green_light</item>
+        <item name="colorPrimaryContainer">@color/primary_green_dark</item>
+        <item name="colorOnPrimary">@color/primary_green_dark</item>
+        <item name="colorOnPrimaryContainer">@color/primary_green_light</item>
+        
+        <!-- Secondary colors -->
+        <item name="colorSecondary">@color/secondary_orange</item>
+        <item name="colorSecondaryContainer">@color/gray_700</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorOnSecondaryContainer">@color/gray_100</item>
+        
+        <!-- Background colors for dark theme -->
+        <item name="android:colorBackground">@color/gray_900</item>
+        <item name="colorSurface">@color/gray_800</item>
+        <item name="colorSurfaceVariant">@color/gray_700</item>
+        <item name="colorOnBackground">@color/gray_100</item>
+        <item name="colorOnSurface">@color/gray_100</item>
+        <item name="colorOnSurfaceVariant">@color/gray_300</item>
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/secondary_red</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="colorErrorContainer">@color/secondary_red</item>
+        <item name="colorOnErrorContainer">@color/white</item>
+        
+        <!-- Status bar and navigation for dark theme -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Elevations and shapes -->
+        <item name="elevationOverlayEnabled">true</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.EcoPlate.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.EcoPlate.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.EcoPlate.LargeComponent</item>
+        
+        <!-- Window animations -->
+        <item name="android:windowEnterTransition">@android:transition/fade</item>
+        <item name="android:windowExitTransition">@android:transition/fade</item>
+        <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+        <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+        <item name="android:windowContentTransitions">true</item>
+        
+        <!-- Edge to edge -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
     </style>
 </resources>

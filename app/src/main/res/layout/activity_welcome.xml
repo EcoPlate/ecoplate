@@ -48,6 +48,7 @@
         android:textColor="@color/black"
         android:textAllCaps="false"
         android:textSize="16sp"
+        android:visibility="gone"
         app:backgroundTint="@color/cream_primary"
         app:cornerRadius="28dp"
         app:icon="@drawable/ic_home_black_24dp"
@@ -60,6 +61,18 @@
         app:strokeColor="@color/pastel_blue"
         app:strokeWidth="1dp" />
 
-
+    <!-- Loading indicator for auth check -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        app:indicatorColor="@color/cream_primary"
+        app:indicatorSize="48dp"
+        app:trackThickness="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAppName" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

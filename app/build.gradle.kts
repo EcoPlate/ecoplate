@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    id("com.google.devtools.ksp")
+    id("dagger.hilt.android.plugin")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -21,7 +24,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Local development URL (commented out)
+            // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
+            // Using Railway hosted backend
+            buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
+            isMinifyEnabled = false
+        }
         release {
+            // Using Railway hosted backend (production)
+            buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -39,8 +51,15 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
+}
 
+// KSP configuration
+ksp {
+    arg("dagger.hilt.shareTestComponents", "true")
+    arg("dagger.fastInit", "ENABLED")
+    arg("dagger.experimentalDaggerErrorMessages", "ENABLED")
 }
 
 dependencies {
@@ -65,7 +84,46 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.5")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.compose.animation:animation:1.7.5")
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    
+    // Accompanist libraries for additional Compose features
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    implementation("com.google.accompanist:accompanist-pager:0.32.0")
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
+    implementation("com.google.accompanist:accompanist-placeholder:0.32.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
 
-    // OSMDroid (map)
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+    implementation("com.google.maps.android:maps-compose-utils:4.3.0")
+    
+    // Networking
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // JSON Parsing
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    
+    // Dependency Injection - Hilt
+    implementation("com.google.dagger:hilt-android:2.48")
+    ksp("com.google.dagger:hilt-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    
+    // SplashScreen API
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    
+    // Image Loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }

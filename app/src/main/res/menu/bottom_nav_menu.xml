@@ -2,30 +2,28 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/navigation_food_feed"
-        android:icon="@drawable/baseline_dynamic_feed_24"
-        android:title="Food Feed" />
-
-    <item
-        android:id="@+id/navigation_pantry"
-        android:icon="@drawable/outline_brunch_dining_24"
-        android:title="Pantry" />
-
-    <item
         android:id="@+id/navigation_home"
-        android:icon="@drawable/twotone_category_24"
-        android:title="Categories" />
+        android:icon="@drawable/ic_home_24"
+        android:title="Home" />
 
     <item
-        android:id="@+id/navigation_dashboard"
-        android:icon="@drawable/baseline_add_shopping_cart_24"
-        android:title="Stores" />
+        android:id="@+id/navigation_search"
+        android:icon="@drawable/ic_search_24"
+        android:title="Search" />
 
     <item
-        android:id="@+id/navigation_notifications"
-        android:icon="@drawable/outline_contacts_product_24"
+        android:id="@+id/navigation_cart"
+        android:icon="@drawable/ic_cart_24"
+        android:title="Cart" />
+
+    <item
+        android:id="@+id/navigation_orders"
+        android:icon="@drawable/ic_orders_24"
+        android:title="Orders" />
+
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@drawable/ic_profile_24"
         android:title="Profile" />
-
-
 
 </menu>

@@ -8,21 +8,37 @@
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.eco_plate.ui.home.HomeFragment"
-        android:label="Categories"
+        android:label="Home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.eco_plate.ui.dashboard.DashboardFragment"
-        android:label="Stores"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_search"
+        android:name="com.example.eco_plate.ui.foodFeed.FoodFeedFragment"
+        android:label="Search" />
 
     <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="com.example.eco_plate.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        android:id="@+id/navigation_cart"
+        android:name="com.example.eco_plate.ui.cart.CartFragment"
+        android:label="Cart" />
 
+    <fragment
+        android:id="@+id/navigation_orders"
+        android:name="com.example.eco_plate.ui.orders.OrdersFragment"
+        android:label="Orders" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.eco_plate.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <!-- Keep old navigation IDs for compatibility -->
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.eco_plate.ui.dashboard.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+    
     <fragment
         android:id="@+id/navigation_food_feed"
         android:name="com.example.eco_plate.ui.foodFeed.FoodFeedFragment"
@@ -32,4 +48,26 @@
         android:id="@+id/navigation_pantry"
         android:name="com.example.eco_plate.ui.pantry.PantryFragment"
         android:label="Pantry" />
+        
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.eco_plate.ui.notifications.NotificationsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
+    
+    <fragment
+        android:id="@+id/navigation_map"
+        android:name="com.example.eco_plate.ui.map.MapFragment"
+        android:label="Track Delivery" />
+    
+    <fragment
+        android:id="@+id/navigation_order_details"
+        android:name="com.example.eco_plate.ui.orders.OrderDetailsFragment"
+        android:label="Order Details" />
+    
+    <fragment
+        android:id="@+id/navigation_store_detail"
+        android:name="com.example.eco_plate.ui.store.StoreDetailFragment"
+        android:label="Store" />
+        
 </navigation>
