@@ -9,6 +9,7 @@ import com.example.eco_plate.databinding.ActivityWelcomeBinding
 import com.example.eco_plate.ui.auth.AuthViewModel
 import com.example.eco_plate.ui.auth.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
+import kotlin.jvm.java
 
 @AndroidEntryPoint
 class WelcomeActivity : AppCompatActivity() {
@@ -35,7 +36,9 @@ class WelcomeActivity : AppCompatActivity() {
                 authViewModel.isLoggedIn.value?.let { isLoggedIn ->
                     if (isLoggedIn) {
                         hasNavigated = true
-                        navigateToMainActivity()
+                        //temp navifate to storeActivity
+                        //navigateToMainActivity()
+                        navigateToStoreActivity()
                     } else {
                         // User is not logged in, show the welcome UI
                         showWelcomeUI()
@@ -81,4 +84,11 @@ class WelcomeActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    private fun navigateToStoreActivity() {
+        val intent = Intent(this, StoreActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
 }
