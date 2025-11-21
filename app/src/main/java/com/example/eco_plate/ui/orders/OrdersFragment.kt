@@ -36,6 +36,7 @@ class OrdersFragment : Fragment() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         ModernOrdersScreen(
+                            viewModel = viewModel,
                             onNavigateToOrderDetail = { orderId ->
                                 // Navigate to order detail with map
                                 val bundle = Bundle().apply {
@@ -44,10 +45,14 @@ class OrdersFragment : Fragment() {
                                 findNavController().navigate(R.id.navigation_order_details, bundle)
                             },
                             onNavigateToReorder = { orderId ->
-                                // Handle reorder
+                                // Reorder handled in ModernOrdersScreen
                             },
                             onNavigateToSupport = {
                                 // Navigate to support
+                            },
+                            onNavigateToHome = {
+                                // Navigate to home page (main page with categories and stores)
+                                findNavController().navigate(R.id.navigation_home)
                             }
                         )
                     }

@@ -31,6 +31,25 @@ class CartFragment : Fragment() {
                         },
                         onNavigateBack = {
                             findNavController().navigateUp()
+                        },
+                        onNavigateToHome = {
+                            // Navigate to home page (main page with categories and stores)
+                            findNavController().navigate(com.example.eco_plate.R.id.navigation_home)
+                        },
+                        onNavigateToStore = { storeId ->
+                            // Navigate to store detail
+                            val bundle = Bundle().apply {
+                                putString("storeId", storeId)
+                            }
+                            try {
+                                findNavController().navigate(
+                                    com.example.eco_plate.R.id.navigation_store_detail,
+                                    bundle
+                                )
+                            } catch (e: Exception) {
+                                // If store detail not found, navigate to home
+                                findNavController().navigate(com.example.eco_plate.R.id.navigation_home)
+                            }
                         }
                     )
                 }

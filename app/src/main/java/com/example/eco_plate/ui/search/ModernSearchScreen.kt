@@ -2,6 +2,8 @@ package com.example.eco_plate.ui.search
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -28,6 +30,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
@@ -470,6 +474,7 @@ private fun PopularProductCard(
     onClick: () -> Unit,
     onAddToCart: () -> Unit = {}
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -585,21 +590,50 @@ private fun PopularProductCard(
                     }
                     
                     // Add to Cart Button
+                    var isAdded by remember { mutableStateOf(false) }
+                    val scale by animateFloatAsState(
+                        targetValue = if (isAdded) 1.2f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "button_scale"
+                    )
+                    
                     IconButton(
-                        onClick = onAddToCart,
+                        onClick = {
+                            if (!isAdded) {
+                                isAdded = true
+                                onAddToCart()
+                            // Reset after animation
+                            coroutineScope.launch {
+                                delay(1000)
+                                isAdded = false
+                            }
+                            }
+                        },
                         modifier = Modifier
                             .size(32.dp)
+                            .scale(scale)
                             .background(
-                                MaterialTheme.colorScheme.primary,
+                                if (isAdded) EcoColors.Green500 else MaterialTheme.colorScheme.primary,
                                 CircleShape
                             )
                     ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "Add to Cart",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        AnimatedContent(
+                            targetState = isAdded,
+                            transitionSpec = {
+                                fadeIn() + scaleIn() togetherWith fadeOut() + scaleOut()
+                            },
+                            label = "icon_change"
+                        ) { added ->
+                            Icon(
+                                imageVector = if (added) Icons.Filled.Check else Icons.Filled.Add,
+                                contentDescription = if (added) "Added to Cart" else "Add to Cart",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -614,6 +648,7 @@ private fun SearchResultCard(
     onAddToCart: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Card(
         onClick = onClick,
         modifier = modifier,
@@ -676,23 +711,52 @@ private fun SearchResultCard(
                 }
                 
                 // Add to Cart Button
+                var isAdded by remember { mutableStateOf(false) }
+                val scale by animateFloatAsState(
+                    targetValue = if (isAdded) 1.2f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    label = "button_scale"
+                )
+                
                 IconButton(
-                    onClick = onAddToCart,
+                    onClick = {
+                        if (!isAdded) {
+                            isAdded = true
+                            onAddToCart()
+                            // Reset after animation
+                            coroutineScope.launch {
+                                delay(1000)
+                                isAdded = false
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(4.dp)
                         .size(32.dp)
+                        .scale(scale)
                         .background(
-                            MaterialTheme.colorScheme.primary,
+                            if (isAdded) EcoColors.Green500 else MaterialTheme.colorScheme.primary,
                             CircleShape
                         )
                 ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Add to Cart",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    AnimatedContent(
+                        targetState = isAdded,
+                        transitionSpec = {
+                            fadeIn() + scaleIn() togetherWith fadeOut() + scaleOut()
+                        },
+                        label = "icon_change"
+                    ) { added ->
+                        Icon(
+                            imageVector = if (added) Icons.Filled.Check else Icons.Filled.Add,
+                            contentDescription = if (added) "Added to Cart" else "Add to Cart",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
             

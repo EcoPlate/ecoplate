@@ -28,10 +28,15 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import coil.compose.AsyncImage
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -70,12 +75,16 @@ data class Order(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernOrdersScreen(
+    viewModel: OrdersViewModel = viewModel(),
     onNavigateToOrderDetail: (String) -> Unit = {},
     onNavigateToReorder: (String) -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
     onTrackOrder: (String) -> Unit = { onNavigateToOrderDetail(it) } // Track order navigates to detail/map
 ) {
     var selectedTab by remember { mutableStateOf(0) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     
     val tabs = listOf("Active", "Past Orders", "Cancelled")
     
@@ -212,6 +221,9 @@ fun ModernOrdersScreen(
         topBar = {
             OrdersTopBar(onSupportClick = onNavigateToSupport)
         },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
@@ -252,11 +264,25 @@ fun ModernOrdersScreen(
                 1 -> PastOrdersContent(
                     orders = pastOrders,
                     onOrderClick = onNavigateToOrderDetail,
-                    onReorder = onNavigateToReorder
+                    onReorder = { orderId ->
+                        // Find the order and add items to cart
+                        val order = pastOrders.find { it.id == orderId }
+                        order?.let {
+                            viewModel.reorderItems(it)
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Items from ${it.storeName} added to cart",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            onNavigateToReorder(orderId) // Still call the navigation callback if needed
+                        }
+                    }
                 )
                 2 -> EmptyOrdersView(
                     message = "No cancelled orders",
-                    description = "Orders you've cancelled will appear here"
+                    description = "Orders you've cancelled will appear here",
+                    onStartShopping = onNavigateToHome
                 )
             }
         }
@@ -805,7 +831,8 @@ private fun PastOrderCard(
 @Composable
 private fun EmptyOrdersView(
     message: String,
-    description: String
+    description: String,
+    onStartShopping: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -850,7 +877,7 @@ private fun EmptyOrdersView(
         Spacer(modifier = Modifier.height(32.dp))
         
         Button(
-            onClick = { /* Navigate to home */ },
+            onClick = onStartShopping,
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
