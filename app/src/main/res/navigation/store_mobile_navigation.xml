@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/store_mobile_navigation"
+    app:startDestination="@+id/navigation_store_home">
+
+    <!--Store side -->
+    <fragment
+        android:id="@+id/navigation_store_home"
+        android:name="com.example.eco_plate.ui.storeHome.StoreHomeFragment"
+        android:label="Store Home" />
+
+    <fragment
+        android:id="@+id/navigation_new_item"
+        android:name="com.example.eco_plate.ui.newItem.NewItemFragment"
+        android:label="New Item" />
+    <fragment
+        android:id="@+id/navigation_sales"
+        android:name="com.example.eco_plate.ui.sales.SalesFragment"
+        android:label="Sales" />
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.eco_plate.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <!-- Not on Bottom Menu Fragments -->
+    <fragment
+        android:id="@+id/navigation_map"
+        android:name="com.example.eco_plate.ui.map.MapFragment"
+        android:label="Track Delivery" />
+    <fragment
+        android:id="@+id/navigation_order_details"
+        android:name="com.example.eco_plate.ui.orders.OrderDetailsFragment"
+        android:label="Order Details" />
+</navigation>

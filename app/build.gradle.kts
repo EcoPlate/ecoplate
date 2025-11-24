@@ -140,7 +140,17 @@ dependencies {
     debugImplementation("androidx.glance:glance-preview:1.1.1")
     debugImplementation("androidx.glance:glance-appwidget-preview:1.1.1")
 
-    // Motifications
+    // Notifications
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // CameraX
+    implementation("androidx.camera:camera-core:1.3.3")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.3.3")
+    // ML Kit barcode scanning
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    //Text Scan
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
 
 }

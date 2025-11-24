@@ -28,7 +28,12 @@ data class Item(
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")
-    val updatedAt: String
+    val updatedAt: String,
+    //NEW ADDITIONS
+    val brand: String? = null,
+    val upc: String? = null,
+    val plu: Int? = null,
+    val soldByWeight: Boolean = false
 ) : Parcelable
 
 @Parcelize

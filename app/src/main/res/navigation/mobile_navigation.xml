@@ -5,6 +5,7 @@
     android:id="@+id/mobile_navigation"
     app:startDestination="@+id/navigation_home">
 
+    <!-- Client side -->
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.eco_plate.ui.home.HomeFragment"
@@ -59,7 +60,7 @@
         android:id="@+id/navigation_map"
         android:name="com.example.eco_plate.ui.map.MapFragment"
         android:label="Track Delivery" />
-    
+
     <fragment
         android:id="@+id/navigation_order_details"
         android:name="com.example.eco_plate.ui.orders.OrderDetailsFragment"
@@ -69,5 +70,6 @@
         android:id="@+id/navigation_store_detail"
         android:name="com.example.eco_plate.ui.store.StoreDetailFragment"
         android:label="Store" />
+
         
 </navigation>
