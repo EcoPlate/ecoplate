@@ -8,7 +8,13 @@ data class SignUpRequest(
     val username: String? = null,
     val firstName: String? = null,
     val lastName: String? = null,
-    val phone: String? = null
+    val phone: String? = null,
+    val role: String? = null, // "USER" or "STORE_OWNER"
+    // Store fields for STORE_OWNER signup
+    val storeName: String? = null,
+    val storeAddress: String? = null,
+    val storePhone: String? = null,
+    val storeDescription: String? = null
 )
 
 data class BusinessSignUpRequest(

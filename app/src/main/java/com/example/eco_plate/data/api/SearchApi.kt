@@ -7,30 +7,30 @@ import retrofit2.http.*
 interface SearchApi {
     @GET("search/stores")
     suspend fun searchStores(
-        @Query("lat") latitude: Double,
-        @Query("lng") longitude: Double,
-        @Query("radius") radius: Double? = null,
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("radiusKm") radius: Double? = null,
         @Query("category") category: String? = null,
         @Query("query") query: String? = null,
-        @Query("limit") limit: Int? = null,
-        @Query("offset") offset: Int? = null
-    ): Response<SearchStoresResponse>
+        @Query("take") limit: Int? = null,
+        @Query("skip") offset: Int? = null
+    ): Response<ApiWrapper<SearchStoresResponse>>
 
     @GET("search/items")
     suspend fun searchItems(
-        @Query("lat") latitude: Double,
-        @Query("lng") longitude: Double,
-        @Query("radius") radius: Double? = null,
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("radiusKm") radius: Double? = null,
         @Query("category") category: String? = null,
         @Query("query") query: String? = null,
-        @Query("minDiscount") minDiscount: Int? = null,
+        @Query("minPrice") minDiscount: Int? = null,
         @Query("maxPrice") maxPrice: Double? = null,
-        @Query("isVegetarian") isVegetarian: Boolean? = null,
-        @Query("isVegan") isVegan: Boolean? = null,
-        @Query("isGlutenFree") isGlutenFree: Boolean? = null,
-        @Query("limit") limit: Int? = null,
-        @Query("offset") offset: Int? = null
-    ): Response<SearchItemsResponse>
+        @Query("nearBestBefore") nearBestBefore: Boolean? = null,
+        @Query("isClearance") isClearance: Boolean? = null,
+        @Query("storeType") storeType: String? = null,
+        @Query("take") limit: Int? = null,
+        @Query("skip") offset: Int? = null
+    ): Response<ApiWrapper<SearchItemsResponse>>
 
     @GET("search/stores/nearby")
     suspend fun getNearbyStores(

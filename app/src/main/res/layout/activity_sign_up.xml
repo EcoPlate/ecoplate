@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:fitsSystemWindows="true"
+    android:background="@color/white"
     tools:context=".ui.auth.SignUpActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="24dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="20dp">
 
         <ImageView
             android:id="@+id/ivLogo"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginTop="24dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="8dp"
             android:src="@drawable/ic_launcher_foreground"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -26,9 +35,9 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:text="Create Account"
-            android:textSize="28sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -38,19 +47,20 @@
             android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:text="Join us to save food and money"
-            android:textSize="16sp"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilFirstName"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="6dp"
             app:layout_constraintEnd_toStartOf="@+id/tilLastName"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
@@ -60,16 +70,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="First Name (Optional)"
-                android:inputType="textPersonName" />
+                android:inputType="textPersonName"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilLastName"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/tilFirstName"
             app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
@@ -79,15 +91,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Last Name (Optional)"
-                android:inputType="textPersonName" />
+                android:inputType="textPersonName"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUsername"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilFirstName">
@@ -97,15 +111,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Username (Optional)"
-                android:inputType="text" />
+                android:inputType="text"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilEmail"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilUsername">
@@ -115,15 +131,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Email"
-                android:inputType="textEmailAddress" />
+                android:inputType="textEmailAddress"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPhone"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilEmail">
@@ -133,15 +151,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Phone (Optional)"
-                android:inputType="phone" />
+                android:inputType="phone"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             app:passwordToggleEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -152,15 +172,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Password (8+ chars, A-z, 0-9, special)"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilConfirmPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             app:passwordToggleEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -171,16 +193,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Confirm Password"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:textSize="14sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSignUp"
             android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
             android:text="Sign Up"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilConfirmPassword" />
@@ -188,8 +212,8 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -199,7 +223,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Already have an account? " />
+                android:text="Already have an account? "
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/tvLogin"
@@ -207,7 +232,8 @@
                 android:layout_height="wrap_content"
                 android:text="Login"
                 android:textColor="@color/purple_500"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textSize="13sp" />
 
         </LinearLayout>
 
@@ -239,6 +265,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</ScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</FrameLayout>

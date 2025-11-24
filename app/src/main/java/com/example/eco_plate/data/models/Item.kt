@@ -11,30 +11,51 @@ data class Item(
     val store: Store? = null,
     val name: String,
     val description: String? = null,
-    val category: ItemCategory,
-    val originalPrice: Double,
-    val discountedPrice: Double,
-    val discountPercentage: Double,
-    val quantity: Int,
+    val category: String? = null,
+    val subcategory: String? = null,
+    val originalPrice: Double? = null,
+    val currentPrice: Double,
+    val discountPercent: Double? = null,
+    val sku: String? = null,
+    val barcode: String? = null,
+    val stockQuantity: Int = 0,
     val unit: String? = null,
+    val bestBefore: String? = null,
     val expiryDate: String? = null,
-    val imageUrl: String? = null,
-    val allergens: List<String>? = null,
+    val isClearance: Boolean = false,
+    val images: List<String>? = null,
     val nutritionInfo: NutritionInfo? = null,
-    val isVegetarian: Boolean = false,
-    val isVegan: Boolean = false,
-    val isGlutenFree: Boolean = false,
+    val allergens: List<String>? = null,
+    val tags: List<String>? = null,
     val isAvailable: Boolean = true,
-    @SerializedName("created_at")
+    val availableFrom: String? = null,
+    val availableUntil: String? = null,
     val createdAt: String,
-    @SerializedName("updated_at")
     val updatedAt: String,
+    // Store details included in response
+    val storeName: String? = null,
+    val storeType: String? = null,
+    val storeAddress: String? = null,
+    val storeLatitude: Double? = null,
+    val storeLongitude: Double? = null,
+    val distanceMeters: Double? = null,
     //NEW ADDITIONS
     val brand: String? = null,
     val upc: String? = null,
     val plu: Int? = null,
     val soldByWeight: Boolean = false
-) : Parcelable
+) : Parcelable {
+    // Compatibility properties for old field names
+    val discountedPrice: Double get() = currentPrice
+    val discountPercentage: Double get() = discountPercent ?: 0.0
+    val quantity: Int get() = stockQuantity
+    val imageUrl: String? get() = images?.firstOrNull()
+    
+    // For dietary restrictions - check tags list
+    val isVegetarian: Boolean get() = tags?.contains("vegetarian") == true
+    val isVegan: Boolean get() = tags?.contains("vegan") == true
+    val isGlutenFree: Boolean get() = tags?.contains("gluten-free") == true
+}
 
 @Parcelize
 data class NutritionInfo(
@@ -59,5 +80,6 @@ enum class ItemCategory {
     PANTRY,
     BEVERAGES,
     SNACKS,
+    GROCERY,
     OTHER
 }

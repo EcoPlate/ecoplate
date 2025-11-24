@@ -6,6 +6,7 @@ import com.example.eco_plate.data.local.TokenManager
 import com.example.eco_plate.data.models.*
 import com.example.eco_plate.utils.Resource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -224,6 +225,12 @@ class AuthRepository @Inject constructor(
     
     fun getCurrentUser(): User? {
         return currentUserFlow.value
+    }
+    
+    fun getUserRole(): Flow<String?> = tokenManager.userRole
+    
+    suspend fun getUserRoleSync(): String? {
+        return tokenManager.userRole.first()
     }
 
     fun isLoggedInSync(): Boolean {

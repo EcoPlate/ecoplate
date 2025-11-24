@@ -22,8 +22,8 @@ class StoreRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = storeApi.getStores(page, limit, category)
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                emit(Resource.Success(response.body()!!.data))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to fetch stores"))
             }
@@ -40,8 +40,8 @@ class StoreRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = storeApi.getStore(storeId)
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                emit(Resource.Success(response.body()!!.data))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to fetch store details"))
             }
@@ -58,8 +58,8 @@ class StoreRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = storeApi.getMyStores()
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                emit(Resource.Success(response.body()!!.data))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to fetch your stores"))
             }
@@ -76,8 +76,8 @@ class StoreRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = storeApi.createStore(store)
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                emit(Resource.Success(response.body()!!.data))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to create store"))
             }
@@ -94,8 +94,8 @@ class StoreRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = storeApi.updateStore(storeId, store)
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                emit(Resource.Success(response.body()!!.data))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to update store"))
             }

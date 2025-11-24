@@ -73,6 +73,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.LaunchedEffect
+import android.widget.Toast
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -83,6 +86,7 @@ import com.example.eco_plate.data.models.Store
 import com.example.eco_plate.ui.components.EcoColors
 import com.example.eco_plate.ui.components.Rounded
 import com.example.eco_plate.ui.components.Spacing
+import com.example.eco_plate.utils.Resource
 import com.google.gson.annotations.SerializedName
 import java.io.File
 import kotlin.String
@@ -98,9 +102,29 @@ fun NewItemScreen (
     viewModel: NewItemViewModel = viewModel(),
     onNavigateBack: () -> Unit = {}
 ){
+    val createItemState by viewModel.createItemState.observeAsState()
+    
     var showScanner by remember { mutableStateOf(false) }
     var showCamera by remember { mutableStateOf(false) }
     var showNutritionScanner by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    
+    // Handle item creation result
+    LaunchedEffect(createItemState) {
+        when (createItemState) {
+            is Resource.Success<*> -> {
+                // Item created successfully
+                Toast.makeText(context, "Item created successfully!", Toast.LENGTH_SHORT).show()
+                onNavigateBack()
+            }
+            is Resource.Error -> {
+                val errorMessage = (createItemState as Resource.Error).message ?: "Failed to create item"
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
+    }
     var item by remember {
         mutableStateOf(
             Item(
@@ -108,26 +132,37 @@ fun NewItemScreen (
                 name = "",
                 brand = null,
                 storeId = "",
-                category = ItemCategory.OTHER,
+                category = "OTHER",
+                subcategory = null,
                 originalPrice = 0.0,
-                discountedPrice = 0.0,
-                discountPercentage = 0.0,
+                currentPrice = 0.0,
+                discountPercent = 0.0,
+                sku = null,
+                barcode = null,
+                stockQuantity = 1,
                 unit = null,
+                bestBefore = null,
                 expiryDate = null,
-                imageUrl = null,
+                isClearance = false,
+                images = null,
                 description = null,
-                isVegetarian = false,
-                isVegan = false,
-                isGlutenFree = false,
+                tags = null,
                 isAvailable = true,
+                availableFrom = null,
+                availableUntil = null,
                 createdAt = "", // Will be set by backend
                 updatedAt = "", // Will be set by backend
                 upc = null,
                 plu = null,
-                quantity = 1,
                 soldByWeight = false,
                 allergens = null,
                 nutritionInfo = null,
+                storeName = null,
+                storeType = null,
+                storeAddress = null,
+                storeLatitude = null,
+                storeLongitude = null,
+                distanceMeters = null,
                 store = null
             )
         )
@@ -258,8 +293,8 @@ fun NewItemScreen (
             // category dropdown and Unit
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CategoryDropdown(
-                    selected = item.category,
-                    onSelected = { newCategory -> item = item.copy(category = newCategory)},
+                    selected = try { ItemCategory.valueOf(item.category ?: "OTHER") } catch(e: Exception) { ItemCategory.OTHER },
+                    onSelected = { newCategory -> item = item.copy(category = newCategory.name)},
                     modifier = Modifier.weight(2f)
                 )
 //                //Item unit input (redundant)?
@@ -318,7 +353,13 @@ fun NewItemScreen (
                         Checkbox(
                             checked = item.isVegetarian,
                             onCheckedChange = { isChecked ->
-                                item = item.copy(isVegetarian = isChecked)
+                                val currentTags = item.tags?.toMutableList() ?: mutableListOf()
+                                if (isChecked) {
+                                    currentTags.add("vegetarian")
+                                } else {
+                                    currentTags.remove("vegetarian")
+                                }
+                                item = item.copy(tags = currentTags.distinct())
                             }
                         )
                         Text("Vegetarian")
@@ -326,7 +367,15 @@ fun NewItemScreen (
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = item.isVegan,
-                            onCheckedChange = { isChecked -> item = item.copy(isVegan = isChecked) }
+                            onCheckedChange = { isChecked ->
+                                val currentTags = item.tags?.toMutableList() ?: mutableListOf()
+                                if (isChecked) {
+                                    currentTags.add("vegan")
+                                } else {
+                                    currentTags.remove("vegan")
+                                }
+                                item = item.copy(tags = currentTags.distinct())
+                            }
                         )
                         Text("Vegan")
                     }
@@ -334,7 +383,13 @@ fun NewItemScreen (
                         Checkbox(
                             checked = item.isGlutenFree,
                             onCheckedChange = { isChecked ->
-                                item = item.copy(isGlutenFree = isChecked)
+                                val currentTags = item.tags?.toMutableList() ?: mutableListOf()
+                                if (isChecked) {
+                                    currentTags.add("gluten-free")
+                                } else {
+                                    currentTags.remove("gluten-free")
+                                }
+                                item = item.copy(tags = currentTags.distinct())
                             }
                         )
                         Text("Gluten-Free")
@@ -354,7 +409,52 @@ fun NewItemScreen (
             // Submit Button
             Button(
                 onClick = {
-                    // TODO: Implement the logic to save the item
+                    // Validate required fields
+                    if (item.name.isBlank()) {
+                        // Show error - name is required
+                        Toast.makeText(context, "Item name is required", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    
+                    // Check if we have a valid original price
+                    val finalOriginalPrice = item.originalPrice ?: 0.0
+                    
+                    if (finalOriginalPrice <= 0) {
+                        // Show error - price must be positive
+                        Toast.makeText(context, "Original price is required", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    
+                    // If no discount price is set, use original price as current price
+                    val finalCurrentPrice = if (item.currentPrice > 0) item.currentPrice else finalOriginalPrice
+                    
+                    // Build tags list from dietary preferences
+                    val tags = mutableListOf<String>()
+                    item.tags?.forEach { tags.add(it) }
+                    
+                    // Convert image URL to list if present
+                    val imageUrls = item.images ?: emptyList()
+                    
+                    Toast.makeText(context, "Creating item...", Toast.LENGTH_SHORT).show()
+                    
+                    // Call the viewModel to create the item
+                    viewModel.createItem(
+                        name = item.name,
+                        description = item.description,
+                        category = item.category.toString(),
+                        originalPrice = finalOriginalPrice,
+                        currentPrice = finalCurrentPrice,
+                        stockQuantity = item.stockQuantity,
+                        unit = item.unit ?: "unit",
+                        barcode = item.upc,
+                        sku = item.sku,
+                        imageUrls = imageUrls,
+                        expiryDate = item.expiryDate,
+                        bestBefore = item.bestBefore,
+                        isClearance = item.isClearance,
+                        tags = tags.ifEmpty { null },
+                        allergens = item.allergens
+                    )
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -380,7 +480,7 @@ fun NewItemScreen (
         if (showCamera) {
             CameraCaptureScreen(
                 onPictureTaken = { file ->
-                    item = item.copy(imageUrl = file.absolutePath) // Correct state update
+                    item = item.copy(images = listOf(file.absolutePath)) // Use images list
                     showCamera = false
                 },
                 onBack = { showCamera = false }
@@ -493,8 +593,11 @@ fun OriginalPriceField(
                         // When the user leaves the field, format the number
                         if (!focusState.isFocused) {
                             val finalPrice = priceInput.toDoubleOrNull() ?: 0.0
-                            // Update the official Item state
-                            onItemChange(item.copy(originalPrice = finalPrice))
+                            // Update the official Item state - set both originalPrice and currentPrice if currentPrice is 0
+                            onItemChange(item.copy(
+                                originalPrice = finalPrice,
+                                currentPrice = if (item.currentPrice <= 0) finalPrice else item.currentPrice
+                            ))
                             // Format the visible text to have two decimal places
                             priceInput =
                                 if (finalPrice > 0.0) String.format("%.2f", finalPrice) else ""
@@ -553,8 +656,9 @@ fun DiscountPricingFields(
                         discountedPriceInput = newValue
                         // Calculate percentage on the fly while typing price
                         val newDiscountedPrice = newValue.safeToDouble()
-                        if (item.originalPrice > 0 && newDiscountedPrice > 0 && newDiscountedPrice <= item.originalPrice) {
-                            val newPercent = ((item.originalPrice - newDiscountedPrice) / item.originalPrice * 100)
+                        val origPrice = item.originalPrice ?: 0.0
+                        if (origPrice > 0 && newDiscountedPrice > 0 && newDiscountedPrice <= origPrice) {
+                            val newPercent = ((origPrice - newDiscountedPrice) / origPrice * 100)
                             discountPercentInput = newPercent.toInt().toString()
                         } else {
                             discountPercentInput = ""
@@ -572,9 +676,9 @@ fun DiscountPricingFields(
                             val finalDiscountedPrice = discountedPriceInput.safeToDouble()
                             onItemChange(
                                 item.copy(
-                                    discountedPrice = finalDiscountedPrice,
-                                    discountPercentage = if (item.originalPrice > 0 && finalDiscountedPrice > 0) {
-                                        ((item.originalPrice - finalDiscountedPrice) / item.originalPrice * 100)
+                                    currentPrice = finalDiscountedPrice,
+                                    discountPercent = if ((item.originalPrice ?: 0.0) > 0 && finalDiscountedPrice > 0) {
+                                        ((item.originalPrice!! - finalDiscountedPrice) / item.originalPrice!! * 100)
                                     } else 0.0
                                 )
                             )
@@ -597,8 +701,9 @@ fun DiscountPricingFields(
                         if (percent <= 100) {
                             discountPercentInput = newValue
                             // Calculate discounted price on the fly while typing percent
-                            if (item.originalPrice > 0 && percent > 0) {
-                                val newDiscountedPrice = item.originalPrice * (1 - percent / 100.0)
+                            val origPrice = item.originalPrice ?: 0.0
+                            if (origPrice > 0 && percent > 0) {
+                                val newDiscountedPrice = origPrice * (1 - percent / 100.0)
                                 discountedPriceInput = String.format("%.2f", newDiscountedPrice)
                             } else {
                                 discountedPriceInput = ""
@@ -618,14 +723,15 @@ fun DiscountPricingFields(
                         if (!focusState.isFocused) {
                             // When user leaves the field, commit the final state
                             val finalPercent = discountPercentInput.toIntOrNull() ?: 0
+                            val origPrice = item.originalPrice ?: 0.0
                             val finalDiscountedPrice =
-                                if (item.originalPrice > 0 && finalPercent > 0) {
-                                    item.originalPrice * (1 - finalPercent / 100.0)
+                                if (origPrice > 0 && finalPercent > 0) {
+                                    origPrice * (1 - finalPercent / 100.0)
                                 } else 0.0
                             onItemChange(
                                 item.copy(
-                                    discountedPrice = finalDiscountedPrice,
-                                    discountPercentage = finalPercent.toDouble()
+                                    currentPrice = finalDiscountedPrice,
+                                    discountPercent = finalPercent.toDouble()
                                 )
                             )
                         }

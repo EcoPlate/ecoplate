@@ -86,6 +86,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -125,6 +126,21 @@ data class StoreProduct(
     val isEcoFriendly: Boolean = false,
     val expiryDate: String? = null,
     val quantity: Int = 0
+)
+
+data class Product(
+    val id: String,
+    val name: String,
+    val category: String,
+    val price: Float,
+    val originalPrice: Float? = null,
+    val discount: Int? = null,
+    val quantity: String,
+    val imageUrl: String,
+    val isEdited: Boolean = false,
+    val expiryDate: String = "",
+    val description: String = "",
+    val isEcoFriendly: Boolean = false
 )
 
 data class StoreData(
@@ -232,10 +248,11 @@ fun StoreHomeScreen (
     onProductClick: (String) -> Unit = {},
     //onNavigateToCart: () -> Unit
 ) {
-    val store = remember { storeProducts[storeId] ?: storeProducts["1"]!! }
-    //var selectedCategory by remember { mutableStateOf("All") }
+    // Observe store data from ViewModel
+    val storeItems by viewModel.storeItems.observeAsState()
+    val currentStore by viewModel.currentStore.observeAsState()
+    
     var selectedCategory by remember { mutableStateOf<String?>(null) }
-    //val cartItemsCount by viewModel.cartItemsCount.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var showFilters by remember { mutableStateOf(false) }
     var filters by remember { mutableStateOf(SearchFilter()) }
@@ -245,22 +262,46 @@ fun StoreHomeScreen (
     val recentSearches = remember {
         listOf("Organic Avocados", "Whole Wheat Bread", "Almond Milk", "Fresh Strawberries")
     }
-    val categories = listOf("All") + store.categories
+    
+    // Get categories from actual items
+    val categories = remember(storeItems) {
+        val itemCategories = storeItems?.data?.mapNotNull { it.category?.toString() }?.distinct() ?: emptyList()
+        listOf("All") + itemCategories
+    }
 
-//    val filteredProducts = remember(selectedCategory) {
-//        if (selectedCategory == "All") {
-//            store.products
-//        } else {
-//            store.products.filter { it.category == selectedCategory }
-//        }
-//    }
-    //change all products to filtered by store
-    val allProducts = remember { store.products }
-    var searchResults by remember { mutableStateOf(allProducts) }
+    // Convert Item model to Product for UI
+    val allProducts = remember(storeItems) {
+        storeItems?.data?.map { item ->
+            Product(
+                id = item.id,
+                name = item.name,
+                category = item.category.toString(),
+                price = item.discountedPrice.toFloat(),
+                originalPrice = if ((item.originalPrice ?: 0.0) > item.discountedPrice) {
+                    item.originalPrice?.toFloat()
+                } else null,
+                discount = item.discountPercentage.toInt(),
+                quantity = item.quantity.toString(),
+                imageUrl = item.imageUrl ?: "https://via.placeholder.com/150",
+                isEdited = false,
+                expiryDate = item.expiryDate ?: "",
+                description = item.description ?: "",
+                isEcoFriendly = false
+            )
+        } ?: emptyList()
+    }
+    
+    var searchResults by remember(allProducts) { mutableStateOf(allProducts) }
+    
+    // Load store data on first launch
+    LaunchedEffect(storeId) {
+        viewModel.loadStoreData(storeId)
+        viewModel.loadStoreItems(storeId)
+    }
 
 
     var showQuickEditSheet by remember { mutableStateOf(false) }
-    var productToEdit by remember { mutableStateOf<StoreProduct?>(null) }
+    var productToEdit by remember { mutableStateOf<Product?>(null) }
 
     //Search effect
     LaunchedEffect(searchQuery, selectedCategory, filters) {
@@ -465,7 +506,7 @@ fun StoreHomeScreen (
 
 @Composable
 private fun StoreProductCard(
-    product: StoreProduct,
+    product: Product,
     //onAddToCart: () -> Unit,
     onEditClick: () -> Unit, // Changed from onAddToCart
     modifier: Modifier = Modifier
@@ -757,8 +798,8 @@ private fun SearchSuggestionSection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QuickEditBottomSheet(
-    product: StoreProduct,
-    onProductUpdate: (StoreProduct) -> Unit,
+    product: Product,
+    onProductUpdate: (Product) -> Unit,
     //onNavigateToFullEdit: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -791,9 +832,9 @@ private fun QuickEditBottomSheet(
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                 )
                 QuantityStepper(
-                    quantity = editableProduct.quantity,
+                    quantity = editableProduct.quantity.toIntOrNull() ?: 0,
                     onQuantityChange = { newQuantity ->
-                        editableProduct = editableProduct.copy(quantity = newQuantity)
+                        editableProduct = editableProduct.copy(quantity = newQuantity.toString())
                     }
                 )
             }
@@ -1002,15 +1043,14 @@ private enum class ChipColors {
 
 
 private fun filterProducts(
-    products: List<StoreProduct>,
+    products: List<Product>,
     query: String,
     category: String?,
     filters: SearchFilter
-): List<StoreProduct> {
+): List<Product> {
     return products
         .filter { product ->
             (query.isEmpty() || product.name.contains(query, ignoreCase = true) )
-                    //|| product.store.contains(query, ignoreCase = true))
         }
         .filter { product ->
             category == null || product.category == category
@@ -1018,16 +1058,11 @@ private fun filterProducts(
         .filter { product ->
             product.price in filters.priceRange
         }
-//        .filter { product ->
-//            (!filters.isOrganic || product.isOrganic) &&
-//                    (!filters.isEcoFriendly || product.isEcoFriendly)
-//        }
         .sortedBy { product ->
             when (filters.sortBy) {
                 SortOption.RELEVANCE -> 0
                 SortOption.PRICE_LOW_HIGH -> product.price.toInt()
                 SortOption.PRICE_HIGH_LOW -> -product.price.toInt()
-                //SortOption.RATING -> -product.rating.toInt()
                 SortOption.RATING -> 0
                 SortOption.DISCOUNT -> -(product.discount ?: 0)
             }

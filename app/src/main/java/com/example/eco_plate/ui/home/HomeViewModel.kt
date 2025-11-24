@@ -47,7 +47,9 @@ class HomeViewModel @Inject constructor(
         latitude: Double,
         longitude: Double,
         category: String? = null,
-        query: String? = null
+        query: String? = null,
+        minDiscount: Int? = null,  // Make discount optional
+        limit: Int = 50  // Get more products to show on home
     ) {
         viewModelScope.launch {
             searchRepository.searchItems(
@@ -55,11 +57,12 @@ class HomeViewModel @Inject constructor(
                 longitude = longitude,
                 category = category,
                 query = query,
-                minDiscount = 20 // Show items with at least 20% discount
+                minDiscount = minDiscount,  // Don't force discount filter
+                limit = limit  // Pass limit to get more products
             ).onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        _featuredItems.value = Resource.Success(result.data?.items)
+                        _featuredItems.value = Resource.Success(result.data?.data)
                     }
                     is Resource.Error -> {
                         _featuredItems.value = Resource.Error(result.message ?: "Error loading items")

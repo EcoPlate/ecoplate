@@ -35,7 +35,12 @@ class SearchRepository @Inject constructor(
                 offset = offset
             )
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+                val wrapper = response.body()!!
+                if (wrapper.success) {
+                    emit(Resource.Success(wrapper.data))
+                } else {
+                    emit(Resource.Error(wrapper.message ?: "Failed to search stores"))
+                }
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to search stores"))
             }
@@ -56,9 +61,9 @@ class SearchRepository @Inject constructor(
         query: String? = null,
         minDiscount: Int? = null,
         maxPrice: Double? = null,
-        isVegetarian: Boolean? = null,
-        isVegan: Boolean? = null,
-        isGlutenFree: Boolean? = null,
+        nearBestBefore: Boolean? = null,
+        isClearance: Boolean? = null,
+        storeType: String? = null,
         limit: Int? = 20,
         offset: Int? = 0
     ): Flow<Resource<SearchItemsResponse>> = flow {
@@ -72,14 +77,19 @@ class SearchRepository @Inject constructor(
                 query = query,
                 minDiscount = minDiscount,
                 maxPrice = maxPrice,
-                isVegetarian = isVegetarian,
-                isVegan = isVegan,
-                isGlutenFree = isGlutenFree,
+                nearBestBefore = nearBestBefore,
+                isClearance = isClearance,
+                storeType = storeType,
                 limit = limit,
                 offset = offset
             )
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+                val wrapper = response.body()!!
+                if (wrapper.success) {
+                    emit(Resource.Success(wrapper.data))
+                } else {
+                    emit(Resource.Error(wrapper.message ?: "Failed to search items"))
+                }
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to search items"))
             }

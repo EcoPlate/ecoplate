@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,8 +30,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
+import com.example.eco_plate.utils.Resource
+import com.example.eco_plate.data.repository.CartRepository
+import com.example.eco_plate.data.repository.CartItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -45,15 +52,21 @@ data class SearchProduct(
     val rating: Float,
     val isEcoFriendly: Boolean = false,
     val isOrganic: Boolean = false,
+    val isLocal: Boolean = false,
     val imageUrl: String? = null
 )
 
 data class SearchFilter(
     val priceRange: ClosedFloatingPointRange<Float> = 0f..100f,
+    val maxPrice: Double? = null,
+    val minDiscount: Float? = null,
     val categories: List<String> = emptyList(),
     val stores: List<String> = emptyList(),
     val isOrganic: Boolean = false,
     val isEcoFriendly: Boolean = false,
+    val vegetarian: Boolean = false,
+    val vegan: Boolean = false,
+    val glutenFree: Boolean = false,
     val sortBy: SortOption = SortOption.RELEVANCE
 )
 
@@ -65,23 +78,26 @@ enum class SortOption {
 @Composable
 fun ModernSearchScreen(
     viewModel: SearchViewModel,
+    cartRepository: CartRepository = remember { CartRepository() },
     onBackClick: () -> Unit = {},
     onProductClick: (String) -> Unit = {},
     onStoreClick: (String) -> Unit = {},
     onNavigateToCart: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var searchTrigger by remember { mutableStateOf("") } // Actual query to search
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showFilters by remember { mutableStateOf(false) }
     var filters by remember { mutableStateOf(SearchFilter()) }
     var isSearching by remember { mutableStateOf(false) }
+    var hasSearched by remember { mutableStateOf(false) } // Track if user has searched
     
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val cartItemsCount by viewModel.cartItemsCount.collectAsState()
+    val cartItemsCount by cartRepository.cartItemsCount.collectAsState()
     
     val categories = remember {
-        listOf("All", "Vegetables", "Fruits", "Dairy", "Meat", "Bakery", "Snacks", "Beverages", "Frozen", "Organic")
+        listOf("All", "VEGETABLES", "FRUITS", "DAIRY", "MEAT", "BAKERY", "SNACKS", "BEVERAGES", "FROZEN", "OTHER")
     }
     
     val recentSearches = remember {
@@ -92,19 +108,76 @@ fun ModernSearchScreen(
         listOf("Zero Waste", "Plant-Based", "Local Produce", "Gluten Free", "Vegan Options")
     }
     
-    // Sample products
-    val allProducts = remember { generateSampleProducts() }
-    var searchResults by remember { mutableStateOf(allProducts) }
+    // Observe search results from ViewModel
+    val itemSearchResults by viewModel.itemSearchResults.observeAsState()
+    val nearbyStores by viewModel.nearbyStores.observeAsState()
     
-    // Search effect
+    // Convert API results to SearchProduct format
+    val searchResults = remember(itemSearchResults) {
+        val results = itemSearchResults
+        when (results) {
+            is Resource.Success -> {
+                results.data?.data?.map { item ->
+                    SearchProduct(
+                        id = item.id,
+                        name = item.name,
+                        store = item.storeName ?: item.store?.name ?: "Unknown Store",
+                        category = item.category ?: "Other",
+                        price = item.currentPrice.toFloat(),
+                        originalPrice = if (item.originalPrice != null && item.originalPrice > item.currentPrice) {
+                            item.originalPrice.toFloat()
+                        } else null,
+                        discount = item.discountPercent?.toInt() ?: 0,
+                        rating = 4.5f, // Default rating until we add it to the model
+                        isOrganic = item.tags?.contains("organic") == true,
+                        isLocal = item.tags?.contains("local") == true,
+                        imageUrl = item.images?.firstOrNull() ?: ""
+                    )
+                } ?: emptyList()
+            }
+            else -> emptyList()
+        }
+    }
+    
+    // Load nearby stores on screen launch
+    LaunchedEffect(Unit) {
+        viewModel.getNearbyStores()
+        // Also load initial items
+        viewModel.searchItems(query = null)
+    }
+    
+    // Search effect with improved debouncing
     LaunchedEffect(searchQuery, selectedCategory, filters) {
-        if (searchQuery.isNotEmpty() || selectedCategory != null) {
-            isSearching = true
-            delay(300) // Debounce
-            searchResults = filterProducts(allProducts, searchQuery, selectedCategory, filters)
-            isSearching = false
-        } else {
-            searchResults = allProducts
+        if (searchQuery.isNotEmpty() || selectedCategory != null || filters != SearchFilter()) {
+            // Wait longer for user to finish typing
+            delay(800) // Increased debounce time
+            
+            // Only search if query hasn't changed during the delay
+            if (searchQuery == searchTrigger && searchQuery.isNotEmpty()) {
+                return@LaunchedEffect
+            }
+            
+            searchTrigger = searchQuery
+            if (searchQuery.isNotEmpty() || selectedCategory != null || filters != SearchFilter()) {
+                isSearching = true
+                hasSearched = true
+                
+                viewModel.searchItems(
+                    query = if (searchQuery.isNotEmpty()) searchQuery else null,
+                    category = if (selectedCategory != null && selectedCategory != "All") selectedCategory else null,
+                    nearBestBefore = if (filters.vegetarian) true else null,
+                    isClearance = if (filters.vegan) true else null,
+                    storeType = null,
+                    maxPrice = filters.maxPrice,
+                    minDiscount = filters.minDiscount?.toInt()
+                )
+                isSearching = false
+            }
+        } else if (searchQuery.isEmpty() && hasSearched) {
+            // Clear results when search is cleared
+            searchTrigger = ""
+            hasSearched = false
+            viewModel.clearSearchResults()
         }
     }
     
@@ -114,8 +187,32 @@ fun ModernSearchScreen(
             SearchTopBar(
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
+                onSearchSubmit = { 
+                    // Manual submit on Enter key
+                    searchTrigger = searchQuery
+                    isSearching = true
+                    hasSearched = true
+                    
+                    coroutineScope.launch {
+                        viewModel.searchItems(
+                            query = if (searchQuery.isNotEmpty()) searchQuery else null,
+                            category = if (selectedCategory != null && selectedCategory != "All") selectedCategory else null,
+                            nearBestBefore = if (filters.vegetarian) true else null,
+                            isClearance = if (filters.vegan) true else null,
+                            storeType = null,
+                            maxPrice = filters.maxPrice,
+                            minDiscount = filters.minDiscount?.toInt()
+                        )
+                        isSearching = false
+                    }
+                },
                 onBackClick = onBackClick,
-                onClearSearch = { searchQuery = "" },
+                onClearSearch = { 
+                    searchQuery = ""
+                    searchTrigger = ""
+                    hasSearched = false
+                    viewModel.clearSearchResults()
+                },
                 onFilterClick = { showFilters = true },
                 cartItemsCount = cartItemsCount,
                 onCartClick = onNavigateToCart
@@ -139,7 +236,7 @@ fun ModernSearchScreen(
                 ) {
                     items(categories) { category ->
                         CategoryChip(
-                            category = category,
+                            category = category.lowercase().capitalize(),
                             isSelected = selectedCategory == category || (selectedCategory == null && category == "All"),
                             onClick = {
                                 selectedCategory = if (category == "All") null else category
@@ -200,26 +297,40 @@ fun ModernSearchScreen(
                 }
                 
                 // Popular Products Horizontal List
-                item {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(5) { index ->
-                            PopularProductCard(
-                                product = allProducts[index],
-                                onClick = { onProductClick(allProducts[index].id) },
-                                onAddToCart = {
-                                    viewModel.addToCart(allProducts[index])
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "${allProducts[index].name} added to cart",
-                                            duration = SnackbarDuration.Short
+                if (searchResults.isNotEmpty()) {
+                    item {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(minOf(5, searchResults.size)) { index ->
+                                PopularProductCard(
+                                    product = searchResults[index],
+                                    onClick = { onProductClick(searchResults[index].id) },
+                                    onAddToCart = {
+                                        val product = searchResults[index]
+                                        cartRepository.addToCart(
+                                            CartItem(
+                                                id = product.id,
+                                                name = product.name,
+                                                storeName = product.store,
+                                                price = product.price,
+                                                originalPrice = product.originalPrice,
+                                                quantity = 1,
+                                                imageUrl = product.imageUrl,
+                                                isEcoFriendly = product.isLocal || product.isOrganic
+                                            )
                                         )
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "${searchResults[index].name} added to cart",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
@@ -236,7 +347,8 @@ fun ModernSearchScreen(
                             CircularProgressIndicator()
                         }
                     }
-                } else if (searchResults.isEmpty()) {
+                } else if (searchResults.isEmpty() && hasSearched && !isSearching) {
+                    // Only show "No results" if user has searched and we're not currently searching
                     item {
                         NoResultsFound(searchQuery)
                     }
@@ -291,7 +403,18 @@ fun ModernSearchScreen(
                                     product = product,
                                     onClick = { onProductClick(product.id) },
                                     onAddToCart = { 
-                                        viewModel.addToCart(product)
+                                        cartRepository.addToCart(
+                                            CartItem(
+                                                id = product.id,
+                                                name = product.name,
+                                                storeName = product.store,
+                                                price = product.price,
+                                                originalPrice = product.originalPrice,
+                                                quantity = 1,
+                                                imageUrl = product.imageUrl,
+                                                isEcoFriendly = product.isLocal || product.isOrganic
+                                            )
+                                        )
                                         coroutineScope.launch {
                                             snackbarHostState.showSnackbar(
                                                 message = "${product.name} added to cart",
@@ -332,6 +455,7 @@ fun ModernSearchScreen(
 private fun SearchTopBar(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
+    onSearchSubmit: () -> Unit = {},
     onBackClick: () -> Unit,
     onClearSearch: () -> Unit,
     onFilterClick: () -> Unit,
@@ -358,6 +482,12 @@ private fun SearchTopBar(
                 onValueChange = onSearchChange,
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Search for products...") },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = { onSearchSubmit() }
+                ),
                 leadingIcon = {
                     Icon(
                         Icons.Outlined.Search,
@@ -801,7 +931,11 @@ private fun NoResultsFound(query: String) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "We couldn't find any products matching \"$query\"",
+            text = if (query.isNotEmpty()) {
+                "We couldn't find any products matching \"$query\""
+            } else {
+                "Try searching for a product or browsing categories"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -980,64 +1114,4 @@ private enum class ChipColors {
     default, trending
 }
 
-// Helper functions
-private fun generateSampleProducts(): List<SearchProduct> {
-    return listOf(
-        SearchProduct("1", "Organic Avocados", "Whole Foods", "Vegetables", 5.99f, 7.99f, 25, 4.8f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400"),
-        SearchProduct("2", "Fresh Strawberries", "Trader Joe's", "Fruits", 3.99f, null, null, 4.7f, false, true,
-            imageUrl = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400"),
-        SearchProduct("3", "Whole Wheat Bread", "Safeway", "Bakery", 2.49f, 3.49f, 30, 4.5f, true, false,
-            imageUrl = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400"),
-        SearchProduct("4", "Almond Milk", "Save-On-Foods", "Dairy", 4.49f, null, null, 4.6f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400"),
-        SearchProduct("5", "Free Range Eggs", "IGA", "Dairy", 6.99f, 8.99f, 20, 4.9f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400"),
-        SearchProduct("6", "Wild Salmon", "T&T", "Meat", 14.99f, null, null, 4.8f, true, false,
-            imageUrl = "https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=400"),
-        SearchProduct("7", "Greek Yogurt", "Urban Fare", "Dairy", 5.49f, 6.99f, 15, 4.7f, false, false,
-            imageUrl = "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400"),
-        SearchProduct("8", "Quinoa Salad", "Fresh St.", "Prepared", 8.99f, null, null, 4.5f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=400"),
-        SearchProduct("9", "Organic Kale", "Choices", "Vegetables", 3.49f, 4.49f, 25, 4.6f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=400"),
-        SearchProduct("10", "Sourdough Bread", "Nesters", "Bakery", 4.99f, null, null, 4.8f, false, false,
-            imageUrl = "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400"),
-        SearchProduct("11", "Organic Bananas", "Whole Foods", "Fruits", 2.99f, 3.99f, 25, 4.7f, true, true,
-            imageUrl = "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400"),
-        SearchProduct("12", "Fresh Broccoli", "Save-On-Foods", "Vegetables", 3.49f, null, null, 4.6f, true, false,
-            imageUrl = "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=400"),
-    )
-}
-
-private fun filterProducts(
-    products: List<SearchProduct>,
-    query: String,
-    category: String?,
-    filters: SearchFilter
-): List<SearchProduct> {
-    return products
-        .filter { product ->
-            (query.isEmpty() || product.name.contains(query, ignoreCase = true) || 
-             product.store.contains(query, ignoreCase = true))
-        }
-        .filter { product ->
-            category == null || product.category == category
-        }
-        .filter { product ->
-            product.price in filters.priceRange
-        }
-        .filter { product ->
-            (!filters.isOrganic || product.isOrganic) &&
-            (!filters.isEcoFriendly || product.isEcoFriendly)
-        }
-        .sortedBy { product ->
-            when (filters.sortBy) {
-                SortOption.RELEVANCE -> 0
-                SortOption.PRICE_LOW_HIGH -> product.price.toInt()
-                SortOption.PRICE_HIGH_LOW -> -product.price.toInt()
-                SortOption.RATING -> -product.rating.toInt()
-                SortOption.DISCOUNT -> -(product.discount ?: 0)
-            }
-        }
-}
+// Helper functions - API data is now used instead of sample products

@@ -34,6 +34,8 @@ android {
         release {
             // Using Railway hosted backend (production)
             buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
+            // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -124,6 +126,9 @@ dependencies {
     
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    
+    // Compose LiveData
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.5")
     
     // SplashScreen API
     implementation("androidx.core:core-splashscreen:1.0.1")

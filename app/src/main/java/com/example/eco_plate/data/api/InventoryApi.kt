@@ -18,12 +18,12 @@ interface InventoryApi {
     suspend fun getItem(@Path("id") itemId: String): Response<Item>
 
     @POST("inventory/items")
-    suspend fun createItem(@Body item: Map<String, Any>): Response<Item>
+    suspend fun createItem(@Body item: @JvmSuppressWildcards Map<String, Any>): Response<Item>
 
     @PATCH("inventory/items/{id}")
     suspend fun updateItem(
         @Path("id") itemId: String,
-        @Body item: Map<String, Any>
+        @Body item: @JvmSuppressWildcards Map<String, Any>
     ): Response<Item>
 
     @DELETE("inventory/items/{id}")

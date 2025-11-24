@@ -15,8 +15,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.fragment.findNavController
 import com.example.eco_plate.ui.theme.EcoPlateTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlin.getValue
 
+@AndroidEntryPoint
 class StoreHomeFragment : Fragment(){
     private val viewModel: StoreHomeViewModel by viewModels()
 

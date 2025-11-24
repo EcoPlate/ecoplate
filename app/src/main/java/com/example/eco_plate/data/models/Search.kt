@@ -2,6 +2,15 @@ package com.example.eco_plate.data.models
 
 import com.google.gson.annotations.SerializedName
 
+// Wrapper for backend API responses
+data class ApiWrapper<T>(
+    val success: Boolean,
+    val data: T,
+    val timestamp: String? = null,
+    val path: String? = null,
+    val message: String? = null
+)
+
 data class SearchStoresRequest(
     val latitude: Double,
     val longitude: Double,
@@ -27,16 +36,18 @@ data class SearchItemsRequest(
     val offset: Int? = 0
 )
 
+// Search stores response structure
 data class SearchStoresResponse(
-    val stores: List<Store>,
+    val data: List<Store>,
     val total: Int,
-    val page: Int,
-    val limit: Int
+    val skip: Int,
+    val take: Int
 )
 
+// Search items response structure  
 data class SearchItemsResponse(
-    val items: List<Item>,
+    val data: List<Item>,
     val total: Int,
-    val page: Int,
-    val limit: Int
+    val skip: Int,
+    val take: Int
 )

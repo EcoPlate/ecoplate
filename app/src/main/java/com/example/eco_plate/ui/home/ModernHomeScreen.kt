@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.*
+import com.example.eco_plate.ui.location.LocationManager
+import com.example.eco_plate.utils.Resource
 import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -101,50 +104,74 @@ fun ModernHomeScreen(
         )
     }
     
-    val nearbyStores = remember {
-        listOf(
-            StoreInfo("1", "Whole Foods Market", 4.8f, "10-15 min", 
-                "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400"),
-            StoreInfo("2", "Trader Joe's", 4.7f, "15-20 min", 
-                "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400"),
-            StoreInfo("3", "Safeway", 4.5f, "5-10 min", 
-                "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=400"),
-            StoreInfo("4", "Save-On-Foods", 4.6f, "10-15 min", 
-                "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400"),
-            StoreInfo("5", "IGA Marketplace", 4.4f, "15-20 min", 
-                "https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?w=400"),
-            StoreInfo("6", "T&T Supermarket", 4.9f, "20-25 min", 
-                "https://images.unsplash.com/photo-1553531889-e6cf4d692b1b?w=400"),
-            StoreInfo("7", "Fresh St. Market", 4.7f, "12-18 min", 
-                "https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=400"),
-            StoreInfo("8", "Urban Fare", 4.6f, "18-22 min", 
-                "https://images.unsplash.com/photo-1601599561213-832382fd07ba?w=400"),
-            StoreInfo("9", "Choices Markets", 4.8f, "8-12 min", 
-                "https://images.unsplash.com/photo-1540713434306-58505cf1b6fc?w=400"),
-            StoreInfo("10", "Nesters Market", 4.3f, "3-7 min", 
-                "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400")
-        )
+    // Get stores and products from viewModel
+    val nearbyStoresResource by viewModel.nearbyStores.observeAsState()
+    val featuredItemsResource by viewModel.featuredItems.observeAsState()
+    val locationManager = LocationManager(LocalContext.current)
+    
+    // Load stores from backend when screen opens
+    LaunchedEffect(Unit) {
+        locationManager.getLastKnownLocation { location ->
+            if (location != null) {
+                viewModel.loadNearbyStores(location.latitude, location.longitude)
+                viewModel.searchItems(location.latitude, location.longitude)
+            } else {
+                // Use default Vancouver location if no location available
+                viewModel.loadNearbyStores(49.2827, -123.1207)
+                viewModel.searchItems(49.2827, -123.1207)
+            }
+        }
     }
     
-    val popularProducts = remember {
-        listOf(
-            ProductItem("p1", "Organic Tomatoes", "Whole Foods", 4.99f, 2.49f, 50,
-                "https://images.unsplash.com/photo-1546470427-227e2f27b271?w=400"),
-            ProductItem("p2", "Fresh Lettuce", "Trader Joe's", 3.99f, 1.99f, 50,
-                "https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=400"),
-            ProductItem("p3", "Sweet Corn", "Safeway", 5.99f, 2.99f, 50,
-                "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400"),
-            ProductItem("p4", "Red Apples", "Save-On-Foods", 6.99f, 3.49f, 50,
-                "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=400"),
-            ProductItem("p5", "Fresh Oranges", "IGA", 5.49f, 2.74f, 50,
-                "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=400"),
-            ProductItem("p6", "Ripe Bananas", "T&T", 2.99f, 1.49f, 50,
-                "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400"),
-            ProductItem("p7", "Green Peppers", "Urban Fare", 4.49f, 2.24f, 50,
-                "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400"),
-            ProductItem("p8", "Fresh Carrots", "Choices", 3.49f, 1.74f, 50,
-                "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400")
-        )
+    // Convert backend stores to UI model
+    val nearbyStores = when (val resource = nearbyStoresResource) {
+        is Resource.Success -> {
+            resource.data?.map { store ->
+                StoreInfo(
+                    id = store.id,
+                    name = store.name,
+                    rating = store.rating?.toFloat() ?: 4.5f,
+                    deliveryTime = "${(10..30).random()} min",
+                    imageUrl = store.imageUrl ?: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400"
+                )
+            } ?: emptyList()
+        }
+        else -> emptyList()
+    }
+    
+    // Get all products from backend (not just discounted ones)
+    val popularProducts = when (val resource = featuredItemsResource) {
+        is Resource.Success -> {
+            resource.data?.map { item ->
+                ProductItem(
+                    id = item.id,
+                    name = item.name,
+                    store = item.storeName ?: item.store?.name ?: "Store",
+                    originalPrice = item.originalPrice?.toFloat() ?: item.currentPrice.toFloat(),
+                    discountedPrice = item.currentPrice.toFloat(),
+                    discount = if (item.originalPrice != null && item.originalPrice > item.currentPrice) {
+                        ((1 - (item.currentPrice / item.originalPrice)) * 100).toInt()
+                    } else 0,
+                    imageUrl = item.images?.firstOrNull() ?: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400",
+                    expiryDate = item.expiryDate ?: item.bestBefore ?: "Fresh"
+                )
+            } ?: emptyList()
+        }
+        is Resource.Loading -> {
+            // Show placeholder items while loading
+            listOf(
+                ProductItem("loading1", "Loading...", "Store", 0f, 0f, 0,
+                    "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400")
+            )
+        }
+        is Resource.Error -> {
+            // Show empty list on error
+            emptyList()
+        }
+        null -> {
+            // Initial state - show empty list
+            emptyList()
+        }
     }
     
     Scaffold(
@@ -286,8 +313,8 @@ fun ModernHomeScreen(
             item {
                 Column {
                     SectionHeader(
-                        title = "Expiring Soon - Save Now!",
-                        actionText = "View all"
+                        title = if (popularProducts.isNotEmpty()) "Available Products Near You" else "No Products Available",
+                        actionText = if (popularProducts.isNotEmpty()) "View all" else ""
                     )
                     
                     LazyRow(

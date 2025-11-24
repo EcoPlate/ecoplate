@@ -11,6 +11,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.example.eco_plate.MainActivity
+import com.example.eco_plate.StoreActivity
 import com.example.eco_plate.databinding.ActivityLoginBinding
 import com.example.eco_plate.utils.Resource
 import com.example.eco_plate.workers.NotificationWorker
@@ -43,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.tvSignUp.setOnClickListener {
-            startActivity(Intent(this, SignUpActivity::class.java))
+            startActivity(Intent(this, UserTypeSelectionActivity::class.java))
         }
 
         binding.tvForgotPassword.setOnClickListener {
@@ -61,7 +62,22 @@ class LoginActivity : AppCompatActivity() {
                     showLoading(false)
                     scheduleArrivingWorker(applicationContext)
                     Toast.makeText(this, "Welcome back!", Toast.LENGTH_SHORT).show()
-                    navigateToMain()
+                    
+                    // Get the user from the successful auth response
+                    val user = result.data?.user
+                    if (user != null) {
+                        // Navigate based on the user role from the response
+                        val intent = when (user.role) {
+                            "STORE_OWNER" -> Intent(this, StoreActivity::class.java)
+                            else -> Intent(this, MainActivity::class.java)
+                        }
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        // Fallback if user is null
+                        navigateToMain()
+                    }
                 }
                 is Resource.Error -> {
                     showLoading(false)
@@ -76,12 +92,6 @@ class LoginActivity : AppCompatActivity() {
                     }
                     Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 }
-            }
-        }
-
-        authViewModel.isLoggedIn.observe(this) { isLoggedIn ->
-            if (isLoggedIn) {
-                navigateToMain()
             }
         }
     }
@@ -113,7 +123,12 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
+        // Check user role and navigate accordingly
+        val currentUser = authViewModel.getCurrentUser()
+        val intent = when (currentUser?.role) {
+            "STORE_OWNER" -> Intent(this, StoreActivity::class.java)
+            else -> Intent(this, MainActivity::class.java)
+        }
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

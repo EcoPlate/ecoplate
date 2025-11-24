@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -15,8 +16,8 @@ import androidx.core.view.isVisible
 import com.example.eco_plate.databinding.ActivityWelcomeBinding
 import com.example.eco_plate.ui.auth.AuthViewModel
 import com.example.eco_plate.ui.auth.LoginActivity
+import com.example.eco_plate.ui.auth.UserTypeSelectionActivity
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.jvm.java
 
 @AndroidEntryPoint
 class WelcomeActivity : AppCompatActivity() {
@@ -37,31 +38,52 @@ class WelcomeActivity : AppCompatActivity() {
     }
 
     private fun observeAuthState() {
-        // First, observe when the auth check is complete
+        // Observe auth check completion
         authViewModel.authCheckComplete.observe(this) { isComplete ->
             if (isComplete && !hasNavigated) {
-                // Auth check is done, now check if user is logged in
-                authViewModel.isLoggedIn.value?.let { isLoggedIn ->
-                    if (isLoggedIn) {
-                        hasNavigated = true
-                        //temp navifate to storeActivity
-                        //navigateToMainActivity()
-                        navigateToStoreActivity()
-                    } else {
-                        // User is not logged in, show the welcome UI
-                        showWelcomeUI()
+                handleNavigation()
+            }
+        }
+        
+        // Also observe role changes to handle any updates
+        authViewModel.userRole.observe(this) { role ->
+            val isComplete = authViewModel.authCheckComplete.value ?: false
+            val isLoggedIn = authViewModel.isLoggedIn.value ?: false
+            
+            // If auth is complete, logged in, and role changed, re-evaluate navigation
+            if (isComplete && isLoggedIn && !hasNavigated && role != null) {
+                handleNavigation()
                     }
                 }
             }
-        }
-
-        // Also observe login state changes for real-time updates
-        authViewModel.isLoggedIn.observe(this) { isLoggedIn ->
-            val authCheckComplete = authViewModel.authCheckComplete.value ?: false
-            if (authCheckComplete && isLoggedIn && !hasNavigated) {
+    
+    private fun handleNavigation() {
+        if (hasNavigated) return
+        
+        val isLoggedIn = authViewModel.isLoggedIn.value ?: false
+        val userRole = authViewModel.userRole.value
+        
+        if (isLoggedIn) {
                 hasNavigated = true
-                navigateToMainActivity()
+            // Navigate based on user role
+            Log.d("Welcome_Activity", "Navigating for user role: $userRole")
+                when (userRole) {
+                "STORE_OWNER" -> {
+                    Log.d("Welcome_Activity", "Navigating to Store Activity")
+                    navigateToStoreActivity()
+                }
+                "USER", null -> {
+                    Log.d("Welcome_Activity", "Navigating to Main Activity")
+                    navigateToMainActivity()
+                }
+                else -> {
+                    Log.d("Welcome_Activity", "Navigating to Main Activity for unknown role: $userRole")
+                    navigateToMainActivity()
+                }
             }
+        } else {
+            // User is not logged in, show the welcome UI
+            showWelcomeUI()
         }
     }
 
@@ -88,7 +110,7 @@ class WelcomeActivity : AppCompatActivity() {
     }
 
     private fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
+        val intent = Intent(this, UserTypeSelectionActivity::class.java)
         startActivity(intent)
         finish()
     }

@@ -58,6 +58,14 @@
             android:exported="false"
             android:theme="@style/Theme.Eco_plate" />
         <activity
+            android:name=".ui.auth.UserTypeSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Eco_plate" />
+        <activity
+            android:name=".ui.auth.StoreSignUpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Eco_plate" />
+        <activity
             android:name=".StoreActivity"
             android:exported="false"
             android:theme="@style/Theme.Eco_plate" />
