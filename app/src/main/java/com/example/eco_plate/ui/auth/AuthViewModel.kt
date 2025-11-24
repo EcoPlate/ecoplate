@@ -106,4 +106,34 @@ class AuthViewModel @Inject constructor(
                 .launchIn(viewModelScope)
         }
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    //                      BUSINESS SIGNUP                                       //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    fun getCurrentUser(): User? {
+        return authRepository.getCurrentUser()
+    }
+    fun businessSignUp(userEmail: String, businessName: String, businessAddress: String, businessPhone: String, businessEmail: String) {
+        viewModelScope.launch {
+
+            val request = BusinessSignUpRequest(
+                email = userEmail,
+                businessName = businessName,
+                businessAddress = businessAddress,
+                businessPhone = businessPhone,
+                businessEmail = businessEmail
+            )
+
+            authRepository.businessSignUp(request)
+                .onEach { result ->
+                    _authState.value = result
+                    if (result is Resource.Success) {
+                        _isLoggedIn.value = true
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+    }
 }

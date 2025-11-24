@@ -1,15 +1,21 @@
 package com.example.eco_plate.ui.auth
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import com.example.eco_plate.MainActivity
 import com.example.eco_plate.databinding.ActivityLoginBinding
 import com.example.eco_plate.utils.Resource
+import com.example.eco_plate.workers.NotificationWorker
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
@@ -53,6 +59,7 @@ class LoginActivity : AppCompatActivity() {
                 }
                 is Resource.Success -> {
                     showLoading(false)
+                    scheduleArrivingWorker(applicationContext)
                     Toast.makeText(this, "Welcome back!", Toast.LENGTH_SHORT).show()
                     navigateToMain()
                 }
@@ -110,5 +117,17 @@ class LoginActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
+    }
+
+    fun scheduleArrivingWorker(context: Context) {
+        val request =
+            PeriodicWorkRequest.Builder(NotificationWorker::class.java, 24, TimeUnit.HOURS).build()
+
+        WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                "orders_arriving_worker",
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
     }
 }

@@ -321,4 +321,68 @@ class AuthRepository @Inject constructor(
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         }
     }
+
+    suspend fun businessSignUp(businessSignUpRequest: BusinessSignUpRequest) : Flow<Resource<AuthResponse>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = authApi.businessSignUp(businessSignUpRequest)
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
+
+                // Check if the backend response indicates success
+                if (authResponse.success != true) {
+                    val errorMsg = authResponse.error ?: authResponse.message ?: "Sign up failed"
+                    Log.e("AuthRepository", "Sign up failed: $errorMsg")
+                    emit(Resource.Error(errorMsg))
+                    return@flow
+                }
+
+                // Check if data field exists
+                if (authResponse.data == null) {
+                    Log.e("AuthRepository", "Sign up failed: data field is null")
+                    emit(Resource.Error("Invalid response from server: missing data"))
+                    return@flow
+                }
+
+                // Validate nested data fields
+                if (authResponse.user == null || authResponse.accessToken == null || authResponse.refreshToken == null) {
+                    Log.e("AuthRepository", "Sign up failed: missing required fields")
+                    emit(Resource.Error("Invalid response from server: missing required fields"))
+                    return@flow
+                }
+
+                // Save tokens and user info
+                val accessToken = authResponse.accessToken!!
+                val refreshToken = authResponse.refreshToken!!
+                val user = authResponse.user!!
+
+                tokenManager.saveTokens(accessToken, refreshToken)
+                tokenManager.saveUserInfo(user.id, user.role ?: "USER")
+                _currentUserFlow.value = user
+
+                Log.d("AuthRepository", "Sign up successful for user: ${user.email}")
+                emit(Resource.Success(authResponse))
+            } else {
+                val errorBody = response.errorBody()?.string()
+
+                // Try to parse error body as JSON
+                try {
+                    val gson = com.google.gson.Gson()
+                    val errorResponse = gson.fromJson(errorBody, AuthResponse::class.java)
+                    val errorMsg = errorResponse?.error ?: errorResponse?.message ?: "Sign up failed"
+                    emit(Resource.Error(errorMsg))
+                } catch (e: Exception) {
+                    emit(Resource.Error(errorBody ?: response.message() ?: "Sign up failed"))
+                }
+            }
+        } catch (e: HttpException) {
+            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
+        } catch (e: IOException) {
+            emit(Resource.Error("Couldn't reach server. Check your internet connection"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("AuthRepository", "Sign up error: ${e.message}", e)
+            emit(Resource.Error("Error: ${e.message ?: "An unexpected error occurred"}"))
+        }
+    }
 }

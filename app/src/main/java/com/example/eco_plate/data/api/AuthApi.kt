@@ -19,4 +19,7 @@ interface AuthApi {
 
     @POST("auth/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ApiResponse<Nothing>>
+
+    @POST("auth/business-signup")
+    suspend fun businessSignUp(@Body request: BusinessSignUpRequest): Response<AuthResponse>
 }

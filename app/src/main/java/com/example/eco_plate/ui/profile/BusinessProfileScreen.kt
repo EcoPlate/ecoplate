@@ -1,29 +1,83 @@
 package com.example.eco_plate.ui.profile
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Co2
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.Water
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
-import androidx.compose.runtime.collectAsState
 
-data class UserProfile(
+data class BusinessProfile(
     val name: String,
     val email: String,
     val phone: String,
@@ -31,12 +85,13 @@ data class UserProfile(
     val totalSaved: Float,
     val totalOrders: Int,
     val co2Saved: Float,
-    val profilePicture: String? = null
+    val businessName: String,
+    val businessImageUrl: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModernProfileScreen(
+fun BusinessProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateToOrders: () -> Unit = {},
     onNavigateToAddresses: () -> Unit = {},
@@ -44,16 +99,16 @@ fun ModernProfileScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignup: () -> Unit = {},
+    onBusinessSignout: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
-    val userProfile by viewModel.userProfile.collectAsState()
+    val businessProfile by viewModel.businessProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    
+
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
-    
+
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         topBar = {
@@ -81,7 +136,7 @@ fun ModernProfileScreen(
                 CircularProgressIndicator()
             }
         } else {
-            userProfile?.let { profile ->
+            businessProfile?.let { profile ->
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -92,16 +147,21 @@ fun ModernProfileScreen(
                     item {
                         ProfileHeader(
                             profile = profile,
+                            headerImageUrl = profile.businessImageUrl,
+                            businessName = profile.businessName,
+                            ratingText = "4.8 (32)",
+                            etaText = "10–15 min",
+                            deliveryText = "Free",
                             onEditEmail = { showEmailDialog = true },
                             onEditPassword = { showPasswordDialog = true }
                         )
                     }
-                    
+
                     // Stats Cards
                     item {
                         StatsSection(profile)
                     }
-                    
+
                     // Quick Actions
                     item {
                         QuickActionsSection(
@@ -109,7 +169,7 @@ fun ModernProfileScreen(
                             onNavigateToAddresses = onNavigateToAddresses
                         )
                     }
-                    
+
                     // Settings Section
                     item {
                         SettingsSection(
@@ -117,16 +177,16 @@ fun ModernProfileScreen(
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignup = onBusinessSignup,
+                            onBusinessSignout = onBusinessSignout,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
-                    
+
                     // Eco Impact Section
                     item {
                         EcoImpactSection(profile)
                     }
-                    
+
                     // App Version
                     item {
                         Text(
@@ -171,7 +231,7 @@ fun ModernProfileScreen(
             }
         }
     }
-    
+
     // Sign Out Dialog
     if (showSignOutDialog) {
         AlertDialog(
@@ -202,11 +262,11 @@ fun ModernProfileScreen(
             }
         )
     }
-    
+
     // Email Edit Dialog
     if (showEmailDialog) {
         EditEmailDialog(
-            currentEmail = userProfile?.email ?: "",
+            currentEmail = businessProfile?.email ?: "",
             onDismiss = { showEmailDialog = false },
             onConfirm = { newEmail ->
                 viewModel.updateEmail(newEmail) { success, message ->
@@ -220,7 +280,7 @@ fun ModernProfileScreen(
             }
         )
     }
-    
+
     // Password Edit Dialog
     if (showPasswordDialog) {
         EditPasswordDialog(
@@ -241,10 +301,21 @@ fun ModernProfileScreen(
 
 @Composable
 private fun ProfileHeader(
-    profile: UserProfile,
+    profile: BusinessProfile,
+    headerImageUrl: String? = null,
+    businessName: String = profile.businessName,
+    ratingText: String? = null,
+    etaText: String? = null,
+    deliveryText: String? = null,
     onEditEmail: () -> Unit = {},
     onEditPassword: () -> Unit = {}
 ) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,6 +329,106 @@ private fun ProfileHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                if (!headerImageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = headerImageUrl,
+                        contentDescription = "$businessName header",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
+
+                // Gradient overlay
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.55f)
+                                )
+                            )
+                        )
+                )
+            }
+
+            // --- 2) Business info section ---
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = businessName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // optional quick stats row like screenshot
+                if (ratingText != null || etaText != null || deliveryText != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ratingText?.let {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Star,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = Color(0xFFFFC107)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(it, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        etaText?.let {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(it, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        deliveryText?.let {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.LocalShipping,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(it, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+
             // Profile Picture
             Box(
                 modifier = Modifier
@@ -275,7 +446,7 @@ private fun ProfileHeader(
                     color = EcoColors.Green600
                 )
             }
-            
+
             // Name and Email
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -297,7 +468,7 @@ private fun ProfileHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             // Edit Profile Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -316,7 +487,7 @@ private fun ProfileHeader(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Email")
                 }
-                
+
                 OutlinedButton(
                     onClick = onEditPassword,
                     modifier = Modifier.weight(1f),
@@ -334,9 +505,10 @@ private fun ProfileHeader(
         }
     }
 }
+}
 
 @Composable
-private fun StatsSection(profile: UserProfile) {
+private fun StatsSection(profile: BusinessProfile) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -349,13 +521,6 @@ private fun StatsSection(profile: UserProfile) {
             value = profile.totalOrders.toString(),
             label = "Total Orders",
             color = MaterialTheme.colorScheme.primary
-        )
-        StatCard(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Outlined.Savings,
-            value = "$${profile.totalSaved}",
-            label = "Total Saved",
-            color = EcoColors.Green500
         )
         StatCard(
             modifier = Modifier.weight(1f),
@@ -382,7 +547,7 @@ private fun QuickActionsSection(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-        
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -410,7 +575,7 @@ private fun SettingsSection(
     onNavigateToNotifications: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignup: () -> Unit,
+    onBusinessSignout: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -422,7 +587,7 @@ private fun SettingsSection(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-        
+
         Card(
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -463,11 +628,13 @@ private fun SettingsSection(
                     title = "About",
                     onClick = onNavigateToAbout
                 )
+                // Business Account Logout -- Switch to User Account
                 HorizontalDivider()
                 SettingsItem(
-                    icon = Icons.Outlined.Store,
-                    title = "Become a Partner",
-                    onClick = onBusinessSignup
+                    icon = Icons.Outlined.Logout,
+                    title = "Switch to User Account",
+                    textColor = MaterialTheme.colorScheme.error,
+                    onClick = onBusinessSignout
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -482,7 +649,7 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun EcoImpactSection(profile: UserProfile) {
+private fun EcoImpactSection(profile: BusinessProfile) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -513,13 +680,13 @@ private fun EcoImpactSection(profile: UserProfile) {
                     color = EcoColors.Green800
                 )
             }
-            
+
             Text(
-                text = "By choosing rescued food, you've made a real difference:",
+                text = "By selling rescued food, you've made a real difference:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = EcoColors.Green700
             )
-            
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -539,7 +706,7 @@ private fun EcoImpactSection(profile: UserProfile) {
                     equivalent = "Enough for ${(profile.co2Saved * 100 / 150).toInt()} showers"
                 )
             }
-            
+
             LinearProgressIndicator(
                 progress = 0.7f,
                 modifier = Modifier
@@ -549,7 +716,7 @@ private fun EcoImpactSection(profile: UserProfile) {
                 color = EcoColors.Green500,
                 trackColor = EcoColors.Green200
             )
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -567,5 +734,85 @@ private fun EcoImpactSection(profile: UserProfile) {
                 )
             }
         }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////
+//                          Previews                            //
+//////////////////////////////////////////////////////////////////
+
+private val previewBusinessProfile = BusinessProfile(
+    name = "Daniel Coop",
+    email = "bakery@example.com",
+    phone = "604-123-4567",
+    memberSince = "Member since 2021",
+    totalSaved = 150.0f,
+    totalOrders = 42,
+    co2Saved = 56.3f,
+    businessName = "Daniel’s Bakery",
+    businessImageUrl = "https://picsum.photos/800/400"
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileHeaderPreview() {
+    ProfileHeader(
+        profile = previewBusinessProfile,
+        ratingText = "4.8 (32)",
+        etaText = "10–15 min",
+        deliveryText = "Free"
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StatsSectionPreview() {
+    StatsSection(profile = previewBusinessProfile)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EcoImpactPreview() {
+    EcoImpactSection(profile = previewBusinessProfile)
+}
+
+
+@Preview(showBackground = true, heightDp = 1800)
+@Composable
+private fun BusinessProfileScreenPreview() {
+    BusinessProfileScreenContent(profile = previewBusinessProfile)
+}
+
+
+@Composable
+private fun BusinessProfileScreenContent(
+    profile: BusinessProfile?
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            ProfileHeader(
+                profile = profile!!,
+                ratingText = "4.8 (32)",
+                etaText = "10–15 min",
+                deliveryText = "Free"
+            )
+        }
+        item { StatsSection(profile!!) }
+        item { QuickActionsSection({}, {}) }
+        item { SettingsSection({}, {}, {}, {}, {}, {}) }
+        item { EcoImpactSection(profile!!) }
     }
 }

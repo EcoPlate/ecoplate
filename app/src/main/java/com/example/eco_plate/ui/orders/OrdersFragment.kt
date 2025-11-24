@@ -36,6 +36,7 @@ class OrdersFragment : Fragment() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         ModernOrdersScreen(
+                            viewModel = viewModel,
                             onNavigateToOrderDetail = { orderId ->
                                 // Navigate to order detail with map
                                 val bundle = Bundle().apply {

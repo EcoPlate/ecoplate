@@ -11,6 +11,14 @@ data class SignUpRequest(
     val phone: String? = null
 )
 
+data class BusinessSignUpRequest(
+    val email: String,
+    val businessName: String,
+    val businessAddress: String,
+    val businessPhone: String,
+    val businessEmail: String
+)
+
 data class SignInRequest(
     val email: String,
     val password: String

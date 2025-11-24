@@ -70,6 +70,7 @@ data class Order(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernOrdersScreen(
+    viewModel: OrdersViewModel,
     onNavigateToOrderDetail: (String) -> Unit = {},
     onNavigateToReorder: (String) -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
@@ -206,6 +207,12 @@ fun ModernOrdersScreen(
             )
         )
     }
+
+    // Update Widget
+    LaunchedEffect(Unit) {
+        viewModel.loadOrders()
+    }
+    val ordersState by viewModel.ordersState.collectAsState()
     
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),

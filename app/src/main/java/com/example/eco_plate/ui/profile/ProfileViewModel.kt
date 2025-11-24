@@ -19,6 +19,9 @@ class ProfileViewModel @Inject constructor(
     
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
+
+    private val _businessProfile = MutableStateFlow<BusinessProfile?>(null)
+    val businessProfile: StateFlow<BusinessProfile?> = _businessProfile.asStateFlow()
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()

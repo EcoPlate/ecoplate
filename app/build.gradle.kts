@@ -74,6 +74,9 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.glance.preview)
+    implementation(libs.androidx.hilt.common)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -86,6 +89,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.compose.animation:animation:1.7.5")
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.7.5")
     
     // Accompanist libraries for additional Compose features
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
@@ -114,8 +118,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     
     // Dependency Injection - Hilt
-    implementation("com.google.dagger:hilt-android:2.48")
-    ksp("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.56.2")
+    ksp("com.google.dagger:hilt-compiler:2.56.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     
     // DataStore Preferences
@@ -126,4 +130,17 @@ dependencies {
     
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Widgets
+    implementation("androidx.glance:glance:1.1.1")
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
+    // Widget Debug Previews
+    debugImplementation("androidx.glance:glance-preview:1.1.1")
+    debugImplementation("androidx.glance:glance-appwidget-preview:1.1.1")
+
+    // Motifications
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
 }
