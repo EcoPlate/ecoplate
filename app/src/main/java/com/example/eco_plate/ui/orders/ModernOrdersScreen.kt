@@ -212,6 +212,7 @@ fun ModernOrdersScreen(
     LaunchedEffect(Unit) {
         viewModel.loadOrders()
     }
+
     val ordersState by viewModel.ordersState.collectAsState()
     
     Scaffold(

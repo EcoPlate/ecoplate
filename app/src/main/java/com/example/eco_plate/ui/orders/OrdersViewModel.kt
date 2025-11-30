@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.String
 
 @HiltViewModel
 class OrdersViewModel @Inject constructor(
@@ -41,6 +42,8 @@ class OrdersViewModel @Inject constructor(
                 _ordersState.value = res
 
                 if (res is Resource.Success && res.data != null) {
+                    // Test
+                    //val lines = listOf<String>("Order #1 • ETA Dec 2")
                     val lines = ordersToWidgetLines(res.data)
                     updateNotificationWidget(appContext, lines)
                 }
