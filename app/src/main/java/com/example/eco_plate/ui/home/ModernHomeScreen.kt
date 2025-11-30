@@ -87,7 +87,7 @@ fun ModernHomeScreen(
     var selectedCategoryIndex by remember { mutableStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
     var showChangeAddress by remember { mutableStateOf(false) }
-    var deliveryAddress by remember { mutableStateOf("123 Main Street, Vancouver") }
+    val deliveryAddress by viewModel.deliveryAddress.collectAsState()
 
     val categories = remember {
         listOf(
@@ -396,7 +396,8 @@ fun ModernHomeScreen(
         ChangeAddressScreen(
             onNavigateBack = { showChangeAddress = false },
             onAddressConfirmed = { newAddress ->
-                deliveryAddress = newAddress
+                //deliveryAddress = newAddress
+                viewModel.updateDeliveryAddress(newAddress)
                 showChangeAddress = false
             }
         )

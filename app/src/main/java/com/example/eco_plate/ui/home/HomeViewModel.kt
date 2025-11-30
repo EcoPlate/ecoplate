@@ -12,6 +12,8 @@ import com.example.eco_plate.data.repository.StoreRepository
 import com.example.eco_plate.ui.location.LocationManager
 import com.example.eco_plate.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -132,5 +134,15 @@ class HomeViewModel @Inject constructor(
             isEcoFriendly = isEcoFriendly
         )
         cartRepository.addToCart(cartItem)
+    }
+
+    //Change Delivery Address Value on Home page.
+    //Doesn't change the users address in the backend.
+    private val _deliveryAddress = MutableStateFlow("123 Main Street, Vancouver")
+    val deliveryAddress = _deliveryAddress.asStateFlow()
+
+    // --- ADD THIS FUNCTION TO UPDATE THE ADDRESS ---
+    fun updateDeliveryAddress(newAddress: String) {
+        _deliveryAddress.value = newAddress
     }
 }
