@@ -11,11 +11,9 @@ suspend fun updateNotificationWidget(context: Context, lines: List<String>) {
 
     ids.forEach { glanceId ->
         updateAppWidgetState(context, glanceId) { prefs ->
-            val m = prefs.toMutablePreferences()
-            m[KEY_NOTIF_1] = lines.getOrNull(0).orEmpty()
-            m[KEY_NOTIF_2] = lines.getOrNull(1).orEmpty()
-            m[KEY_NOTIF_3] = lines.getOrNull(2).orEmpty()
-            m
+            prefs[KEY_NOTIF_1] = lines.getOrNull(0).orEmpty()
+            prefs[KEY_NOTIF_2] = lines.getOrNull(1).orEmpty()
+            prefs[KEY_NOTIF_3] = lines.getOrNull(2).orEmpty()
         }
 
         NotificationWidget().update(context, glanceId)

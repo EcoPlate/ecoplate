@@ -7,8 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.mutablePreferencesOf
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
@@ -36,18 +34,20 @@ class NotificationWidget : GlanceAppWidget() {
 
         provideContent {
             val prefs = currentState<Preferences>()
-            NotificationWidgetContent(prefs)
+
+            val line1 = prefs[KEY_NOTIF_1]?.takeIf { it.isNotBlank() }
+            val line2 = prefs[KEY_NOTIF_2]?.takeIf { it.isNotBlank() }
+            val line3 = prefs[KEY_NOTIF_3]?.takeIf { it.isNotBlank() }
+
+            val items = listOfNotNull(line1, line2, line3)
+            NotificationWidgetContent(items)
         }
     }
 }
 
 @SuppressLint("RestrictedApi")
 @Composable
-fun NotificationWidgetContent(prefs: Preferences) {
-    val items = listOfNotNull(
-        prefs[KEY_NOTIF_1], prefs[KEY_NOTIF_2], prefs[KEY_NOTIF_3]
-
-    )
+fun NotificationWidgetContent(items: List<String>) {
 
     Column(
         modifier = GlanceModifier
@@ -115,10 +115,11 @@ private fun NotificationRow(text: String) {
 @Preview(widthDp = 200, heightDp = 150)
 @Composable
 fun NotificationWidgetPreview() {
-    val fakePrefs = mutablePreferencesOf(
-    KEY_NOTIF_1 to "Order #1243 • ETA Nov 25",
-    KEY_NOTIF_2 to "Order #1240 • Out for delivery",
-    KEY_NOTIF_3 to "New order placed • ETA Nov 28"
-)
-    NotificationWidgetContent(fakePrefs)
+    val items = listOfNotNull(
+        "Order #1243 • ETA Nov 25",
+        "Order #1240 • Out for delivery",
+        "New order placed • ETA Nov 28"
+    )
+
+    NotificationWidgetContent(items)
 }
