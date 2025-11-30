@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import com.example.eco_plate.ui.components.EcoColors
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.layout.layout
 
 data class UserProfile(
     val name: String,
@@ -75,7 +76,8 @@ fun ModernProfileScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .padding(bottom = 100.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -392,6 +394,7 @@ private fun QuickActionsSection(
                 title = "Order History",
                 subtitle = "View all orders",
                 onClick = onNavigateToOrders
+
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),

@@ -76,6 +76,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
+import com.example.eco_plate.ui.profile.EcoImpactSection
+import com.example.eco_plate.ui.profile.StatsSection
 
 data class BusinessProfile(
     val name: String,
@@ -86,7 +88,7 @@ data class BusinessProfile(
     val totalOrders: Int,
     val co2Saved: Float,
     val businessName: String,
-    val businessImageUrl: String? = null
+    val businessImageUrl: String? = null,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,7 +184,7 @@ fun BusinessProfileScreen(
                         )
                     }
 
-                    // Eco Impact Section
+                    //Eco Impact Section
                     item {
                         EcoImpactSection(profile)
                     }
@@ -303,7 +305,7 @@ fun BusinessProfileScreen(
 private fun ProfileHeader(
     profile: BusinessProfile,
     headerImageUrl: String? = null,
-    businessName: String = profile.businessName,
+    businessName: String = profile.name,
     ratingText: String? = null,
     etaText: String? = null,
     deliveryText: String? = null,

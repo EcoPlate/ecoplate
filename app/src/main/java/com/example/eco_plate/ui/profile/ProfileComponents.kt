@@ -99,12 +99,13 @@ fun QuickActionCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+            //verticalAlignment = Alignment.CenterVertically,
+            //horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
                 shape = CircleShape,
@@ -120,26 +121,30 @@ fun QuickActionCard(
                     )
                 }
             }
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Row(
+                modifier = Modifier
+
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ){
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Icon(
+                    Icons.Filled.ArrowForwardIos,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Icon(
-                Icons.Filled.ArrowForwardIos,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

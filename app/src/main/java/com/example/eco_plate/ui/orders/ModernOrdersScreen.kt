@@ -226,6 +226,7 @@ fun ModernOrdersScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(bottom = 100.dp)
         ) {
             // Tab Row
             ScrollableTabRow(

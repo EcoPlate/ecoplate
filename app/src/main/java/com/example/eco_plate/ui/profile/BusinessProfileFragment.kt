@@ -13,13 +13,12 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class ProfileFragment : Fragment() {
+class BusinessProfileFragment : Fragment() {
 
     private val viewModel: ProfileViewModel by viewModels()
     private var hasInitiallyLoaded = false
@@ -49,7 +48,7 @@ class ProfileFragment : Fragment() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        ModernProfileScreen(
+                        BusinessProfileScreen(
                             viewModel = viewModel,
                             onNavigateToOrders = {
                                 // Navigate immediately without waiting for any async operations
@@ -76,11 +75,11 @@ class ProfileFragment : Fragment() {
                                 // TODO: Navigate to about screen
                             },
 
-                            onBusinessSignup = {
-                                val intent = android.content.Intent(requireContext(), com.example.eco_plate.ui.auth.BusinessSignupActivity::class.java)
-                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                startActivity(intent)
-                            },
+//                            onBusinessSignup = {
+//                                val intent = android.content.Intent(requireContext(), com.example.eco_plate.ui.auth.BusinessSignupActivity::class.java)
+//                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+//                                startActivity(intent)
+//                            },
                             onSignOut = {
                                 // Sign out and navigate to login screen
                                 viewModel.signOut()

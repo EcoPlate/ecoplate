@@ -31,7 +31,7 @@
         android:id="@+id/navigation_profile"
         android:name="com.example.eco_plate.ui.profile.ProfileFragment"
         android:label="Profile"
-        tools:layout="@layout/fragment_profile" />
+        tools:layout="@layout/fragment_profile"/>
 
     <!-- Keep old navigation IDs for compatibility -->
     <fragment
