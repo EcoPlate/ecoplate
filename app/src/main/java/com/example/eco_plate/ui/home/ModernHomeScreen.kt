@@ -14,7 +14,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,11 +82,13 @@ fun ModernHomeScreen(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToStore: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
 ) {
     var selectedCategoryIndex by remember { mutableStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
-    
+    var showChangeAddress by remember { mutableStateOf(false) }
+    var deliveryAddress by remember { mutableStateOf("123 Main Street, Vancouver") }
+
     val categories = remember {
         listOf(
             CategoryItem("1", "Fruits", "🍎", EcoColors.Red500),
@@ -215,12 +219,13 @@ fun ModernHomeScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "123 Main Street, Vancouver",
+                                //text = "123 Main Street, Vancouver",
+                                text = deliveryAddress,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                         }
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = {showChangeAddress= true}) {
                             Icon(
                                 imageVector = Icons.Filled.KeyboardArrowDown,
                                 contentDescription = "Change address"
@@ -350,6 +355,15 @@ fun ModernHomeScreen(
                 Spacer(modifier = Modifier.height(80.dp))
             }
         }
+    }
+    if (showChangeAddress) {
+        ChangeAddressScreen(
+            onNavigateBack = { showChangeAddress = false },
+            onAddressConfirmed = { newAddress ->
+                deliveryAddress = newAddress
+                showChangeAddress = false
+            }
+        )
     }
 }
 
