@@ -1,5 +1,7 @@
 package com.example.eco_plate.ui.profile
 
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -91,7 +93,15 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
-    
+
+    fun updateBusinessImage(uri: Uri) {
+        // TODO
+    }
+
+    fun updateBusinessImage(bitmap: Bitmap) {
+        // TODO
+    }
+
     private fun updateProfileFromUser(user: com.example.eco_plate.data.models.User) {
         // Use real user data, ensuring we never pass null
         val firstName = user.firstName?.trim() ?: ""
