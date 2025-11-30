@@ -101,7 +101,6 @@ fun BusinessProfileScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignout: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
     val businessProfile by viewModel.businessProfile.collectAsState()
@@ -179,7 +178,6 @@ fun BusinessProfileScreen(
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignout = onBusinessSignout,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
@@ -577,7 +575,6 @@ private fun SettingsSection(
     onNavigateToNotifications: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignout: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -629,14 +626,6 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Info,
                     title = "About",
                     onClick = onNavigateToAbout
-                )
-                // Business Account Logout -- Switch to User Account
-                HorizontalDivider()
-                SettingsItem(
-                    icon = Icons.Outlined.Logout,
-                    title = "Switch to User Account",
-                    textColor = MaterialTheme.colorScheme.error,
-                    onClick = onBusinessSignout
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -814,7 +803,7 @@ private fun BusinessProfileScreenContent(
         }
         item { StatsSection(profile!!) }
         item { QuickActionsSection({}, {}) }
-        item { SettingsSection({}, {}, {}, {}, {}, {}) }
+        item { SettingsSection({}, {}, {}, {}, {}) }
         item { EcoImpactSection(profile!!) }
     }
 }
