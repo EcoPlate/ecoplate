@@ -45,7 +45,6 @@ fun ModernProfileScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignup: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
@@ -119,7 +118,6 @@ fun ModernProfileScreen(
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignup = onBusinessSignup,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
@@ -413,7 +411,6 @@ private fun SettingsSection(
     onNavigateToNotifications: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignup: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -465,12 +462,6 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Info,
                     title = "About",
                     onClick = onNavigateToAbout
-                )
-                HorizontalDivider()
-                SettingsItem(
-                    icon = Icons.Outlined.Store,
-                    title = "Become a Partner",
-                    onClick = onBusinessSignup
                 )
                 HorizontalDivider()
                 SettingsItem(

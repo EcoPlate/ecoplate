@@ -74,12 +74,6 @@ class BusinessProfileFragment : Fragment() {
                             onNavigateToAbout = {
                                 // TODO: Navigate to about screen
                             },
-
-//                            onBusinessSignup = {
-//                                val intent = android.content.Intent(requireContext(), com.example.eco_plate.ui.auth.BusinessSignupActivity::class.java)
-//                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
-//                                startActivity(intent)
-//                            },
                             onSignOut = {
                                 // Sign out and navigate to login screen
                                 viewModel.signOut()
