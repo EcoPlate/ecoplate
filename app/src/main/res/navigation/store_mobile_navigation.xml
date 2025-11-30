@@ -21,13 +21,9 @@
         android:label="Sales" />
     <fragment
         android:id="@+id/navigation_profile"
-        android:name="com.example.eco_plate.ui.profile.ProfileFragment"
-        android:label="Profile" />
-    <!--
-    <fragment
         android:name="com.example.eco_plate.ui.profile.BusinessProfileFragment"
-        android:label="Business Profile">
-    -->
+        android:label="Business Profile" />
+
 
     <!-- Not on Bottom Menu Fragments -->
     <fragment
