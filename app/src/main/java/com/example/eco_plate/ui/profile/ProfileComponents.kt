@@ -234,6 +234,52 @@ fun ImpactItem(
 }
 
 @Composable
+fun EditImageChoiceDialog(
+    onDismiss: () -> Unit,
+    onChooseGallery: () -> Unit,
+    onChooseCamera: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Change Header Image")
+        },
+        text = {
+            Text("Choose how you’d like to update your business header image.")
+        },
+        confirmButton = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                TextButton(
+                    onClick = onChooseCamera,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Take Photo")
+                }
+
+                TextButton(
+                    onClick = onChooseGallery,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Choose from Device")
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+        },
+        dismissButton = {}
+    )
+}
+
+@Composable
 fun EditEmailDialog(
     currentEmail: String,
     onDismiss: () -> Unit,
