@@ -81,6 +81,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.EcoColors
 import com.example.eco_plate.ui.profile.EcoImpactSection
 import com.example.eco_plate.ui.profile.StatsSection
@@ -116,6 +117,7 @@ fun BusinessProfileScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
 
 
 
@@ -203,6 +205,7 @@ fun BusinessProfileScreen(
                         SettingsSection(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
+                            onNavigateToLanguage = { showLanguageDialog = true },
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToAbout = onNavigateToAbout,
                             onSignOut = { showSignOutDialog = true }
@@ -335,6 +338,22 @@ fun BusinessProfileScreen(
             onChooseCamera = {
                 showImageOptionsDialog = false
                 // TODO: launch camera intent here
+            }
+        )
+    }
+
+    val languageOptions = listOf(
+        LanguageOption("en", "English", R.drawable.outline_language_us_24)
+
+    )
+
+    if (showLanguageDialog) {
+        EditLanguageDialog(
+            options = languageOptions,
+            initialSelectionCode = "en",
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { code, name ->
+                showLanguageDialog = false
             }
         )
     }
@@ -585,6 +604,7 @@ private fun QuickActionsSection(
 private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onSignOut: () -> Unit
@@ -619,7 +639,7 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Language,
                     title = "Language",
                     subtitle = "English",
-                    onClick = { }
+                    onClick = onNavigateToLanguage
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -815,7 +835,7 @@ private fun BusinessProfileScreenContent(
         }
         item { StatsSection(profile!!) }
         item { QuickActionsSection({}, {}) }
-        item { SettingsSection({}, {}, {}, {}, {}) }
+        item { SettingsSection({}, {}, {}, {},  {}, {}) }
         item { EcoImpactSection(profile!!) }
     }
 }
