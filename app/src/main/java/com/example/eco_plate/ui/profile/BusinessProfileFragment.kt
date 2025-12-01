@@ -1,6 +1,9 @@
 package com.example.eco_plate.ui.profile
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +19,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.net.toUri
 
 @AndroidEntryPoint
 class BusinessProfileFragment : Fragment() {
@@ -72,7 +76,8 @@ class BusinessProfileFragment : Fragment() {
                                 // TODO: Navigate to support screen
                             },
                             onNavigateToAbout = {
-                                // TODO: Navigate to about screen
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
+                                startActivity(intent)
                             },
                             onSignOut = {
                                 // Sign out and navigate to login screen
