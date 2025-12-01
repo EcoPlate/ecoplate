@@ -44,6 +44,7 @@ fun ModernProfileScreen(
     onNavigateToAddresses: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onSignOut: () -> Unit = {}
@@ -121,6 +122,7 @@ fun ModernProfileScreen(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToLanguage = { showLanguageDialog = true } ,
+                            onNavigateToPrivacy = onNavigateToPrivacy,
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToHelpAndSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
@@ -438,6 +440,7 @@ private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToLanguage: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToHelpAndSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
@@ -479,7 +482,7 @@ private fun SettingsSection(
                 SettingsItem(
                     icon = Icons.Outlined.Security,
                     title = "Privacy & Security",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
                 HorizontalDivider()
                 SettingsItem(
