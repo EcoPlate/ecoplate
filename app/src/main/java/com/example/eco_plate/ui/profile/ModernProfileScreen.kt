@@ -55,6 +55,8 @@ fun ModernProfileScreen(
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpAndSupportDialog by remember { mutableStateOf(false) }
+
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
@@ -120,6 +122,7 @@ fun ModernProfileScreen(
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToLanguage = { showLanguageDialog = true } ,
                             onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToHelpAndSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
                             onSignOut = { showSignOutDialog = true }
                         )
@@ -254,6 +257,12 @@ fun ModernProfileScreen(
             onConfirm = { code, name ->
                 showLanguageDialog = false
             }
+        )
+    }
+
+    if (showHelpAndSupportDialog) {
+        HelpAndSupportDialog(
+            onDismiss = { showHelpAndSupportDialog = false }
         )
     }
 }
@@ -430,6 +439,7 @@ private fun SettingsSection(
     onNavigateToNotifications: () -> Unit,
     onNavigateToLanguage: () -> Unit,
     onNavigateToSupport: () -> Unit,
+    onNavigateToHelpAndSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onSignOut: () -> Unit
 ) {
@@ -475,7 +485,7 @@ private fun SettingsSection(
                 SettingsItem(
                     icon = Icons.Outlined.HelpOutline,
                     title = "Help & Support",
-                    onClick = onNavigateToSupport
+                    onClick = onNavigateToHelpAndSupport
                 )
                 HorizontalDivider()
                 SettingsItem(

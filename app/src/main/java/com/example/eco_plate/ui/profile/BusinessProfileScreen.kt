@@ -118,6 +118,7 @@ fun BusinessProfileScreen(
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpAndSupportDialog by remember { mutableStateOf(false) }
 
 
 
@@ -206,7 +207,7 @@ fun BusinessProfileScreen(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToLanguage = { showLanguageDialog = true },
-                            onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
                             onSignOut = { showSignOutDialog = true }
                         )
@@ -355,6 +356,12 @@ fun BusinessProfileScreen(
             onConfirm = { code, name ->
                 showLanguageDialog = false
             }
+        )
+    }
+
+    if (showHelpAndSupportDialog) {
+        HelpAndSupportDialog(
+            onDismiss = { showHelpAndSupportDialog = false }
         )
     }
 
