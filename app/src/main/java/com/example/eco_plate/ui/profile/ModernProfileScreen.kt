@@ -22,7 +22,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import com.example.eco_plate.ui.components.EcoColors
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.layout.layout
+import com.example.eco_plate.R
+import com.example.eco_plate.utils.Resource
 
 data class UserProfile(
     val name: String,
@@ -53,7 +54,8 @@ fun ModernProfileScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
-    
+    var showLanguageDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         topBar = {
@@ -116,6 +118,7 @@ fun ModernProfileScreen(
                         SettingsSection(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
+                            onNavigateToLanguage = { showLanguageDialog = true } ,
                             onNavigateToSupport = onNavigateToSupport,
                             onNavigateToAbout = onNavigateToAbout,
                             onSignOut = { showSignOutDialog = true }
@@ -234,6 +237,22 @@ fun ModernProfileScreen(
                     }
                 }
                 showPasswordDialog = false
+            }
+        )
+    }
+
+    val languageOptions = listOf(
+        LanguageOption("en", "English", R.drawable.outline_language_us_24)
+
+    )
+
+    if (showLanguageDialog) {
+        EditLanguageDialog(
+            options = languageOptions,
+            initialSelectionCode = "en",
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { code, name ->
+                showLanguageDialog = false
             }
         )
     }
@@ -409,6 +428,7 @@ private fun QuickActionsSection(
 private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onSignOut: () -> Unit
@@ -443,7 +463,7 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Language,
                     title = "Language",
                     subtitle = "English",
-                    onClick = { }
+                    onClick = onNavigateToLanguage
                 )
                 HorizontalDivider()
                 SettingsItem(
