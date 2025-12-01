@@ -72,6 +72,11 @@ class BusinessProfileFragment : Fragment() {
                                     findNavController().navigate(R.id.navigation_notifications)
                                 }
                             },
+                            onNavigateToPrivacy = {
+                                // TODO: Modify Link to Vid 3
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
+                                startActivity(intent)
+                            },
                             onNavigateToSupport = {
                                 // TODO: Navigate to support screen
                             },

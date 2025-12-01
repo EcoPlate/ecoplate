@@ -106,6 +106,7 @@ fun BusinessProfileScreen(
     onNavigateToAddresses: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onSignOut: () -> Unit = {}
@@ -207,6 +208,7 @@ fun BusinessProfileScreen(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToLanguage = { showLanguageDialog = true },
+                            onNavigateToPrivacy = onNavigateToPrivacy,
                             onNavigateToSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
                             onSignOut = { showSignOutDialog = true }
@@ -612,6 +614,7 @@ private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToLanguage: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onSignOut: () -> Unit
@@ -652,7 +655,7 @@ private fun SettingsSection(
                 SettingsItem(
                     icon = Icons.Outlined.Security,
                     title = "Privacy & Security",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -842,7 +845,7 @@ private fun BusinessProfileScreenContent(
         }
         item { StatsSection(profile!!) }
         item { QuickActionsSection({}, {}) }
-        item { SettingsSection({}, {}, {}, {},  {}, {}) }
+        item { SettingsSection({}, {}, {}, {}, {},  {}, {}) }
         item { EcoImpactSection(profile!!) }
     }
 }
