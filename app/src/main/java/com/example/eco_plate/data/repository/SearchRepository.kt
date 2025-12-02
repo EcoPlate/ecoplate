@@ -40,19 +40,9 @@ class SearchRepository @Inject constructor(
         offset: Int? = 0,
         postalCode: String? = null
     ): Flow<Resource<SearchStoresResponse>> = flow {
-        // First emit cached data if available
-        val cachedStores = getCachedStoresNearLocation(latitude, longitude, radius ?: 5.0)
-        if (cachedStores.isNotEmpty()) {
-            Log.d(TAG, "Returning ${cachedStores.size} cached stores")
-            emit(Resource.Success(SearchStoresResponse(
-                data = cachedStores.map { it.toStore() },
-                total = cachedStores.size,
-                skip = offset ?: 0,
-                take = limit ?: 20
-            )))
-        } else {
+        // Always fetch fresh from API - no cache for location-based queries
+        Log.d(TAG, "Searching stores at ($latitude, $longitude) radius=${radius}km")
         emit(Resource.Loading())
-        }
         
         // Fetch fresh data from API
         try {
@@ -69,33 +59,28 @@ class SearchRepository @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val wrapper = response.body()!!
                 if (wrapper.success) {
-                    // Cache the fresh data
                     val stores = wrapper.data.data
-                    cacheStores(stores, latitude, longitude)
-                    Log.d(TAG, "Cached ${stores.size} stores from API")
+                    Log.d(TAG, "=== STORES API RESPONSE ===")
+                    Log.d(TAG, "Request: lat=$latitude, lng=$longitude, radius=${radius}km")
+                    Log.d(TAG, "Got ${stores.size} stores from API")
+                    stores.forEach { store ->
+                        Log.d(TAG, "  - ${store.name}: (${store.latitude}, ${store.longitude}) dist=${store.distanceKm}km")
+                    }
                     emit(Resource.Success(wrapper.data))
                 } else {
-                    if (cachedStores.isEmpty()) {
+                    Log.e(TAG, "API error: ${wrapper.message}")
                     emit(Resource.Error(wrapper.message ?: "Failed to search stores"))
-                    }
                 }
             } else {
-                if (cachedStores.isEmpty()) {
+                Log.e(TAG, "HTTP error: ${response.code()} - ${response.message()}")
                 emit(Resource.Error(response.message() ?: "Failed to search stores"))
-                }
             }
         } catch (e: HttpException) {
-            if (cachedStores.isEmpty()) {
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
-            }
         } catch (e: IOException) {
-            if (cachedStores.isEmpty()) {
             emit(Resource.Error("Couldn't reach server. Check your internet connection"))
-            }
         } catch (e: Exception) {
-            if (cachedStores.isEmpty()) {
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
-            }
         }
     }
 
@@ -435,16 +420,12 @@ class SearchRepository @Inject constructor(
             maxLat = latitude + latDelta,
             minLng = longitude - lngDelta,
             maxLng = longitude + lngDelta,
-            limit = 50
+            limit = 500
         )
         
-        // If no stores found near location, return all recent stores as fallback
-        return if (nearbyStores.isEmpty()) {
-            Log.d(TAG, "No stores found near location, using recent stores fallback")
-            storeDao.getRecentStores(50)
-        } else {
-            nearbyStores
-        }
+        // Only return stores that are actually nearby - NO FALLBACK to all stores
+        Log.d(TAG, "Found ${nearbyStores.size} cached stores within ${radiusKm}km")
+        return nearbyStores
     }
     
     /**

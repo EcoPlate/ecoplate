@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.compose.material3.MaterialTheme
+import com.example.eco_plate.R
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -27,7 +28,7 @@ class CartFragment : Fragment() {
                     ModernCartScreen(
                         viewModel = cartViewModel,
                         onNavigateToCheckout = {
-                            // TODO: Navigate to checkout screen
+                            findNavController().navigate(R.id.navigation_checkout)
                         },
                         onNavigateBack = {
                             findNavController().navigateUp()

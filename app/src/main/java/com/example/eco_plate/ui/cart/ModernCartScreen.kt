@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -123,10 +124,12 @@ fun ModernCartScreen(
             )
         },
         bottomBar = {
-            CartBottomBar(
-                cartStores = cartStores,
-                onCheckout = onNavigateToCheckout
-            )
+            if (cartStores.isNotEmpty()) {
+                CartBottomBar(
+                    cartStores = cartStores,
+                    onCheckout = onNavigateToCheckout
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp)
@@ -540,47 +543,44 @@ private fun CartBottomBar(
     }.toFloat()
     
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = Elevation.lg
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.md),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(Spacing.md)
         ) {
-            Column {
-                Text(
-                    text = "Total",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "$${"%.2f".format(total)}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            
+            // Checkout button - prominent at top
             Button(
                 onClick = onCheckout,
-                modifier = Modifier.height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(Rounded.xl),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = Color(0xFF16A34A) // EcoGreen
                 )
             ) {
                 Text(
                     text = "Proceed to Checkout",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.width(Spacing.sm))
+                Text(
+                    text = "$${"%.2f".format(total)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.width(Spacing.sm))
                 Icon(
                     imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = Color.White
                 )
             }
         }

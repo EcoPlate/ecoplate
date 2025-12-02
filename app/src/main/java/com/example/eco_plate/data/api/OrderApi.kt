@@ -5,21 +5,36 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface OrderApi {
-    @POST("orders")
-    suspend fun createOrder(@Body request: CreateOrderRequest): Response<Order>
+    // Customer order endpoints
+    @GET("api/orders")
+    suspend fun getMyOrders(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): Response<ApiResponse<OrdersResponse>>
 
-    @GET("orders")
-    suspend fun getMyOrders(): Response<List<Order>>
+    @GET("api/orders/{id}")
+    suspend fun getOrder(@Path("id") orderId: String): Response<ApiResponse<Order>>
 
-    @GET("orders/{id}")
-    suspend fun getOrder(@Path("id") orderId: String): Response<Order>
+    // Store owner order endpoints
+    @GET("api/store/orders")
+    suspend fun getStoreOrders(
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): Response<ApiResponse<OrdersResponse>>
 
-    @PATCH("orders/{id}/status")
+    @GET("api/store/orders/{id}")
+    suspend fun getStoreOrder(@Path("id") orderId: String): Response<ApiResponse<Order>>
+
+    @PUT("api/store/orders/{id}/status")
     suspend fun updateOrderStatus(
         @Path("id") orderId: String,
         @Body request: UpdateOrderStatusRequest
-    ): Response<Order>
+    ): Response<ApiResponse<Order>>
 
-    @GET("orders/stores/{storeId}")
-    suspend fun getStoreOrders(@Path("storeId") storeId: String): Response<List<Order>>
+    @POST("api/store/orders/{id}/refund")
+    suspend fun refundOrder(
+        @Path("id") orderId: String,
+        @Body request: RefundRequest
+    ): Response<ApiResponse<RefundResponse>>
 }

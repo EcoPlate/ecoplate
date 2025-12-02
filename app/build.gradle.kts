@@ -29,11 +29,13 @@ android {
             // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
             // Using Railway hosted backend
             buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
+            buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"pk_test_51SZF9KIKa8cdlJskWhbdavaPSu3NUS604Iv7dYGZorK2vw8pEu5WyVso8WgWieixICkpWQdMQv9FLpvUHAS3F1ni006ZlAHBXM\"")
             isMinifyEnabled = false
         }
         release {
             // Using Railway hosted backend (production)
             buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
+            buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"pk_test_51SZF9KIKa8cdlJskWhbdavaPSu3NUS604Iv7dYGZorK2vw8pEu5WyVso8WgWieixICkpWQdMQv9FLpvUHAS3F1ni006ZlAHBXM\"")
             // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
 
             isMinifyEnabled = false
@@ -173,5 +175,8 @@ dependencies {
 
     //Maps Addresses
     implementation("com.google.android.libraries.places:places:3.5.0")
+
+    // Stripe Payment SDK
+    implementation("com.stripe:stripe-android:21.5.1")
 
 }

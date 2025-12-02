@@ -452,17 +452,21 @@ class SearchViewModel @Inject constructor(
         imageUrl: String? = null,
         isEcoFriendly: Boolean = false
     ) {
-        cartRepository.addToCart(
-            CartItem(
-                id = id,
-                name = name,
-                storeName = storeName,
-                price = price,
-                originalPrice = originalPrice,
-                quantity = quantity,
-                imageUrl = imageUrl,
-                isEcoFriendly = isEcoFriendly
-            )
-        )
+        Log.d(TAG, "Adding to cart: itemId=$id, name=$name, qty=$quantity")
+        viewModelScope.launch {
+            cartRepository.addToCart(id, quantity).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d(TAG, "Successfully added $name to cart")
+                    }
+                    is Resource.Error -> {
+                        Log.e(TAG, "Error adding to cart: ${result.message}")
+                    }
+                    is Resource.Loading -> {
+                        Log.d(TAG, "Adding to cart...")
+                    }
+                }
+            }
+        }
     }
 }

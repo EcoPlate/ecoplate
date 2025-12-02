@@ -18,7 +18,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 private const val TAG = "MapViewModel"
 
@@ -55,9 +60,16 @@ class MapViewModel @Inject constructor(
     private val _showSearchThisArea = MutableLiveData(false)
     val showSearchThisArea: LiveData<Boolean> = _showSearchThisArea
     
+    // Delivery address location (to show pin on map)
+    private val _deliveryAddressLocation = MutableLiveData<LatLng?>(null)
+    val deliveryAddressLocation: LiveData<LatLng?> = _deliveryAddressLocation
+    
+    private val _deliveryAddressLabel = MutableLiveData<String?>(null)
+    val deliveryAddressLabel: LiveData<String?> = _deliveryAddressLabel
+    
     // Current search center and radius
     private var lastSearchCenter: LatLng? = null
-    private var lastSearchRadius: Double = 25.0
+    private var lastSearchRadius: Double = 10.0
     
     // All stores loaded (accumulate as user explores)
     private val allLoadedStores = mutableMapOf<String, MapStore>()
@@ -65,37 +77,53 @@ class MapViewModel @Inject constructor(
     private var cameraMovedJob: Job? = null
 
     init {
-        // Start location updates first to improve chances of getting location
+        // Don't auto-load - wait for delivery address or explicit call
         locationManager.startLocationUpdates()
-        loadUserLocation()
+    }
+
+    /**
+     * Load the map centered on delivery address if available, otherwise GPS
+     */
+    fun loadForDeliveryAddress(latitude: Double?, longitude: Double?) {
+        _isLocationLoading.value = true
+        
+        if (latitude != null && longitude != null) {
+            Log.d(TAG, "Loading map for delivery address: $latitude, $longitude")
+            val location = LatLng(latitude, longitude)
+            _userLocation.postValue(location)
+            _deliveryAddressLocation.postValue(location)
+            loadNearbyStores(latitude, longitude, 10.0)
+            _isLocationLoading.postValue(false)
+        } else {
+            Log.d(TAG, "No delivery address, falling back to GPS")
+            loadUserLocation()
+        }
     }
 
     fun loadUserLocation() {
         _isLocationLoading.value = true
         _locationError.value = null
         
-        Log.d(TAG, "Requesting user location...")
+        Log.d(TAG, "Requesting user GPS location...")
         
         locationManager.getLastKnownLocation { location ->
             if (location != null) {
-                Log.d(TAG, "Got user location: ${location.latitude}, ${location.longitude}")
+                Log.d(TAG, "Got GPS location: ${location.latitude}, ${location.longitude}")
                 _userLocation.postValue(LatLng(location.latitude, location.longitude))
-                loadNearbyStores(location.latitude, location.longitude, 25.0)
+                loadNearbyStores(location.latitude, location.longitude, 10.0)
             } else {
-                Log.w(TAG, "Could not get user location, requesting fresh location...")
-                // Request a fresh location if last known is null
+                Log.w(TAG, "Could not get GPS location, requesting fresh...")
                 locationManager.requestFreshLocation { freshLocation ->
                     if (freshLocation != null) {
-                        Log.d(TAG, "Got fresh location: ${freshLocation.latitude}, ${freshLocation.longitude}")
+                        Log.d(TAG, "Got fresh GPS: ${freshLocation.latitude}, ${freshLocation.longitude}")
                         _userLocation.postValue(LatLng(freshLocation.latitude, freshLocation.longitude))
-                        loadNearbyStores(freshLocation.latitude, freshLocation.longitude, 25.0)
+                        loadNearbyStores(freshLocation.latitude, freshLocation.longitude, 10.0)
                         _locationError.postValue(null)
                     } else {
-                        Log.w(TAG, "Could not get user location, using default")
-                        _locationError.postValue("Could not get your location. Please enable GPS and location permissions.")
-                        // Default to Vancouver if no location - but show error
+                        Log.w(TAG, "No GPS available, using Vancouver default")
+                        _locationError.postValue("Could not get your location.")
                         _userLocation.postValue(LatLng(49.2827, -123.1207))
-                        loadNearbyStores(49.2827, -123.1207, 25.0)
+                        loadNearbyStores(49.2827, -123.1207, 10.0)
                     }
                     _isLocationLoading.postValue(false)
                 }
@@ -106,28 +134,64 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Called when the camera moves - check if we need to show "Search this area" button
+     * Called when the camera moves - automatically load stores for new area
      */
     fun onCameraMoved(center: LatLng, visibleRadius: Double) {
         cameraMovedJob?.cancel()
         cameraMovedJob = viewModelScope.launch {
-            delay(300) // Debounce
+            delay(1500) // Longer debounce to prevent 429 rate limiting
             
-            lastSearchCenter?.let { searchCenter ->
-                // Calculate distance between current center and last search center
-                val distance = calculateDistance(
-                    searchCenter.latitude, searchCenter.longitude,
-                    center.latitude, center.longitude
-                )
-                
-                // Show "Search this area" if user has moved significantly (more than 30% of last search radius)
-                // or if the visible radius is much larger than the last search
-                val shouldShowButton = distance > lastSearchRadius * 0.3 || 
-                                       visibleRadius > lastSearchRadius * 1.5
-                
+            val searchCenter = lastSearchCenter
+            
+            if (searchCenter == null) {
+                // First load - search current area
+                Log.d(TAG, "First camera move, loading stores at center")
+                loadNearbyStores(center.latitude, center.longitude, maxOf(visibleRadius, 10.0))
+                return@launch
+            }
+            
+            // Calculate distance between current center and last search center
+            val distance = calculateDistance(
+                searchCenter.latitude, searchCenter.longitude,
+                center.latitude, center.longitude
+            )
+            
+            // Automatically load new stores if:
+            // 1. User moved more than 20% of the visible radius away
+            // 2. OR the visible radius is significantly different (zoomed in/out)
+            val shouldAutoSearch = distance > visibleRadius * 0.2 || 
+                                  abs(visibleRadius - lastSearchRadius) > lastSearchRadius * 0.3
+            
+            if (shouldAutoSearch) {
+                Log.d(TAG, "Auto-searching new area: distance=$distance, visibleRadius=$visibleRadius")
+                loadNearbyStores(center.latitude, center.longitude, maxOf(visibleRadius * 1.2, 10.0))
+            } else {
+                // Show button for manual search if moved slightly
+                val shouldShowButton = distance > lastSearchRadius * 0.15
                 _showSearchThisArea.postValue(shouldShowButton)
             }
         }
+    }
+    
+    /**
+     * Update search location based on selected delivery address
+     */
+    fun updateDeliveryLocation(latitude: Double, longitude: Double, label: String? = null) {
+        Log.d(TAG, "Updating to delivery address location: $latitude, $longitude ($label)")
+        val location = LatLng(latitude, longitude)
+        _userLocation.postValue(location)
+        _deliveryAddressLocation.postValue(location)
+        _deliveryAddressLabel.postValue(label ?: "Delivery Address")
+        allLoadedStores.clear() // Clear old stores
+        loadNearbyStores(latitude, longitude, 15.0) // Use larger radius for map
+    }
+    
+    /**
+     * Set the delivery address pin location
+     */
+    fun setDeliveryAddressPin(latitude: Double, longitude: Double, label: String = "Delivery Address") {
+        _deliveryAddressLocation.postValue(LatLng(latitude, longitude))
+        _deliveryAddressLabel.postValue(label)
     }
     
     /**
@@ -152,8 +216,10 @@ class MapViewModel @Inject constructor(
         loadNearbyStores(center.latitude, center.longitude, radiusKm)
     }
 
-    fun loadNearbyStores(latitude: Double, longitude: Double, radiusKm: Double = 25.0) {
+    fun loadNearbyStores(latitude: Double, longitude: Double, radiusKm: Double = 10.0) {
         viewModelScope.launch {
+            // CLEAR old stores when searching a new location
+            allLoadedStores.clear()
             _stores.value = Resource.Loading()
             
             // Update last search position
@@ -162,26 +228,35 @@ class MapViewModel @Inject constructor(
             
             val postalCode = locationManager.getPostalCodeFromCoordinates(latitude, longitude)
             
-            Log.d(TAG, "Loading stores at ($latitude, $longitude) with radius $radiusKm km")
+            Log.d(TAG, "Loading stores at ($latitude, $longitude) with radius $radiusKm km - CLEARED OLD STORES")
             
             searchRepository.searchStores(
                 latitude = latitude,
                 longitude = longitude,
                 radius = radiusKm,
-                limit = 100, // Load more stores for map view
+                limit = 500, // No practical limit - load all stores in area
                 postalCode = postalCode
             ).onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        val newStores = result.data?.data?.map { store ->
+                        val searchCenter = LatLng(latitude, longitude)
+                        val newStores = result.data?.data?.mapNotNull { store ->
+                            val storeLat = store.latitude ?: return@mapNotNull null
+                            val storeLng = store.longitude ?: return@mapNotNull null
+                            
+                            // Skip stores at exactly the same location as search center (likely wrong data)
+                            val latDiff = kotlin.math.abs(storeLat - latitude)
+                            val lngDiff = kotlin.math.abs(storeLng - longitude)
+                            if (latDiff < 0.0001 && lngDiff < 0.0001) {
+                                Log.w(TAG, "Skipping store '${store.name}' - at same location as delivery address")
+                                return@mapNotNull null
+                            }
+                            
                             MapStore(
                                 id = store.id,
                                 name = store.name,
                                 address = store.address ?: store.city ?: "Unknown",
-                                location = LatLng(
-                                    store.latitude ?: latitude,
-                                    store.longitude ?: longitude
-                                ),
+                                location = LatLng(storeLat, storeLng),
                                 type = store.type ?: "Grocery",
                                 rating = store.rating?.toFloat() ?: 4.5f,
                                 distance = store.distanceFormatted ?: formatDistance(store.distanceKm),
@@ -189,32 +264,23 @@ class MapViewModel @Inject constructor(
                             )
                         } ?: emptyList()
                         
-                        // Add new stores to our accumulated map
+                        // Only show stores returned by API (already filtered by radius)
+                        allLoadedStores.clear()
                         newStores.forEach { store ->
                             allLoadedStores[store.id] = store
                         }
                         
-                        Log.d(TAG, "Loaded ${newStores.size} new stores, total accumulated: ${allLoadedStores.size}")
+                        Log.d(TAG, "Showing ${newStores.size} stores within ${radiusKm}km radius")
                         
-                        // Return all accumulated stores
-                        _stores.value = Resource.Success(allLoadedStores.values.toList())
+                        _stores.value = Resource.Success(newStores)
                         _showSearchThisArea.value = false
                     }
                     is Resource.Error -> {
-                        // On error, still show previously loaded stores if we have them
-                        if (allLoadedStores.isNotEmpty()) {
-                            _stores.value = Resource.Success(allLoadedStores.values.toList())
-                        } else {
-                            _stores.value = Resource.Error(result.message ?: "Failed to load stores")
-                        }
+                        Log.e(TAG, "Error loading stores: ${result.message}")
+                        _stores.value = Resource.Error(result.message ?: "Failed to load stores")
                     }
                     is Resource.Loading -> {
-                        // Keep showing existing stores while loading new ones
-                        if (allLoadedStores.isNotEmpty()) {
-                            _stores.value = Resource.Success(allLoadedStores.values.toList())
-                        } else {
-                            _stores.value = Resource.Loading()
-                        }
+                        _stores.value = Resource.Loading()
                     }
                 }
             }.launchIn(viewModelScope)

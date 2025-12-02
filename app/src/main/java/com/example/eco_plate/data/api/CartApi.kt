@@ -5,24 +5,35 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface CartApi {
-    @GET("cart")
-    suspend fun getCart(): Response<Cart>
+    @GET("api/cart")
+    suspend fun getCart(): Response<ApiResponse<Cart>>
 
-    @POST("cart/items")
-    suspend fun addToCart(@Body request: AddToCartRequest): Response<Cart>
+    @POST("api/cart/items")
+    suspend fun addToCart(@Body request: AddToCartRequest): Response<ApiResponse<Cart>>
 
-    @PATCH("cart/items/{id}")
+    @PUT("api/cart/items/{id}")
     suspend fun updateCartItem(
         @Path("id") itemId: String,
         @Body request: UpdateCartItemRequest
-    ): Response<Cart>
+    ): Response<ApiResponse<Cart>>
 
-    @DELETE("cart/items/{id}")
-    suspend fun removeFromCart(@Path("id") itemId: String): Response<Cart>
+    @DELETE("api/cart/items/{id}")
+    suspend fun removeFromCart(@Path("id") itemId: String): Response<ApiResponse<Cart>>
 
-    @DELETE("cart")
-    suspend fun clearCart(): Response<ApiResponse<Nothing>>
+    @DELETE("api/cart")
+    suspend fun clearCart(): Response<ApiResponse<Cart>>
 
-    @POST("cart/checkout")
-    suspend fun checkout(): Response<Order>
+    // Payment endpoints
+    @GET("api/payments/config")
+    suspend fun getPaymentConfig(): Response<ApiResponse<PaymentConfigResponse>>
+
+    @POST("api/payments/create-intent")
+    suspend fun createPaymentIntent(@Body request: PaymentIntentRequest): Response<ApiResponse<PaymentIntentResponse>>
+
+    @POST("api/payments/confirm")
+    suspend fun confirmPayment(@Body request: ConfirmPaymentRequest): Response<ApiResponse<ConfirmPaymentResponse>>
 }
+
+data class PaymentConfigResponse(
+    val publishableKey: String
+)

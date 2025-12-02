@@ -287,16 +287,21 @@ class StoreDetailViewModel @Inject constructor(
         quantity: Int = 1,
         imageUrl: String? = null
     ) {
-        val cartItem = com.example.eco_plate.data.repository.CartItem(
-            id = productId,
-            name = productName,
-            storeName = storeName,
-            price = price,
-            originalPrice = null,
-            quantity = quantity,
-            imageUrl = imageUrl,
-            isEcoFriendly = false
-        )
-        cartRepository.addToCart(cartItem)
+        Log.d(TAG, "Adding to cart: productId=$productId, name=$productName, qty=$quantity")
+        viewModelScope.launch {
+            cartRepository.addToCart(productId, quantity).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d(TAG, "Successfully added $productName to cart")
+                    }
+                    is Resource.Error -> {
+                        Log.e(TAG, "Error adding to cart: ${result.message}")
+                    }
+                    is Resource.Loading -> {
+                        Log.d(TAG, "Adding to cart...")
+                    }
+                }
+            }
+        }
     }
 }

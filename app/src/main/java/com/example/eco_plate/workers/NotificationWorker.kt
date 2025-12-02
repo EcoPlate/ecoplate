@@ -36,8 +36,9 @@ class NotificationWorker @AssistedInject constructor(
         if (res is Resource.Success && res.data != null) {
             val today = getTodayIsoDate()
 
+            // Filter orders that are ready or confirmed today
             val arrivingToday = res.data.filter { order ->
-                order.pickupTime?.startsWith(today) == true && order.status != com.example.eco_plate.data.models.OrderStatus.CANCELLED
+                order.createdAt.startsWith(today) && order.status != "CANCELLED"
             }
 
             arrivingToday.forEach { order ->
