@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 // UI-specific CartItem for display
 data class CartItem(
     val id: String,
+    val itemId: String, // Backend item/product ID for API calls
     val name: String,
     val storeName: String,
     val image: String? = null,
@@ -76,6 +77,7 @@ fun ModernCartScreen(
                 items = store.items.map { item ->
                     CartItem(
                         id = item.id,
+                        itemId = item.itemId.ifEmpty { item.id }, // Use itemId for API calls
                         name = item.name,
                         storeName = item.storeName,
                         image = item.imageUrl,
@@ -154,10 +156,12 @@ fun ModernCartScreen(
                         StoreSection(
                             store = cartStores[index],
                             onQuantityChange = { itemId, newQuantity ->
-                                viewModel.updateQuantity(store.storeId, itemId, newQuantity)
+                                // itemId here is the product ID for backend API
+                                viewModel.updateQuantity(itemId, newQuantity)
                             },
                             onRemoveItem = { itemId ->
-                                viewModel.removeFromCart(store.storeId, itemId)
+                                // itemId here is the product ID for backend API
+                                viewModel.removeFromCart(itemId)
                             }
                         )
                     }
@@ -233,8 +237,8 @@ private fun StoreSection(
             store.items.forEach { item ->
                 SwipeableCartItem(
                     item = item,
-                    onQuantityChange = { onQuantityChange(item.id, it) },
-                    onRemove = { onRemoveItem(item.id) }
+                    onQuantityChange = { onQuantityChange(item.itemId, it) },
+                    onRemove = { onRemoveItem(item.itemId) }
                 )
             }
         }
@@ -544,13 +548,15 @@ private fun CartBottomBar(
     
     Surface(
         modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
+            .fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = Elevation.lg
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.md)
+            modifier = Modifier
+                .padding(horizontal = Spacing.md)
+                .padding(top = Spacing.md)
+                .padding(bottom = 80.dp) // Extra padding for bottom navigation bar
         ) {
             // Checkout button - prominent at top
             Button(
