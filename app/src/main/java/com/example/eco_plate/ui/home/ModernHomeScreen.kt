@@ -131,13 +131,17 @@ fun ModernHomeScreen(
                     id = store.id,
                     name = store.name,
                     rating = store.rating?.toFloat() ?: 4.5f,
-                    deliveryTime = "${(10..30).random()} min",
-                    imageUrl = store.imageUrl ?: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400"
+                    deliveryTime = store.distanceFormatted ?: "${(10..30).random()} min",
+                    imageUrl = store.imageUrl ?: getStoreImage(store.type)
                 )
             } ?: emptyList()
         }
-        else -> emptyList()
+        is Resource.Loading -> emptyList()
+        is Resource.Error -> emptyList()
+        null -> emptyList()
     }
+    
+    val isStoresLoading = nearbyStoresResource is Resource.Loading
     
     // Get all products from backend (not just discounted ones)
     val popularProducts = when (val resource = featuredItemsResource) {
@@ -286,13 +290,45 @@ fun ModernHomeScreen(
             // Nearby Stores Section
             item {
                 SectionHeader(
-                    title = "Nearby Stores",
-                    actionText = "View map",
+                    title = if (isStoresLoading) "Loading Stores..." else if (nearbyStores.isEmpty()) "No Stores Nearby" else "Nearby Stores",
+                    actionText = if (nearbyStores.isNotEmpty()) "View map" else "",
                     onActionClick = { 
                         // Special case: pass "map" to navigate to map screen
                         onNavigateToStore("map") 
                     }
                 )
+            }
+            
+            if (isStoresLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = EcoColors.Green500,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            } else if (nearbyStores.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Syncing stores for your area...\nPlease refresh in a moment.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
             
             items(nearbyStores) { store ->
@@ -503,5 +539,17 @@ private fun getGreeting(): String {
         in 12..16 -> "Good afternoon! 🌤️"
         in 17..20 -> "Good evening! 🌅"
         else -> "Good night! 🌙"
+    }
+}
+
+private fun getStoreImage(storeType: String?): String {
+    return when (storeType?.uppercase()) {
+        "SUPERMARKET", "GROCERY" -> "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400"
+        "BAKERY" -> "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400"
+        "RESTAURANT" -> "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400"
+        "CAFE" -> "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=400"
+        "PHARMACY" -> "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=400"
+        "CONVENIENCE" -> "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400"
+        else -> "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400"
     }
 }

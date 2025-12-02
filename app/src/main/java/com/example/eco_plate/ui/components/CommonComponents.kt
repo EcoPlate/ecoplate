@@ -424,7 +424,9 @@ fun ItemCard(
                     Text(
                         text = "Best before: $it",
                         style = MaterialTheme.typography.labelSmall,
-                        color = EcoColors.Orange500
+                        color = EcoColors.Orange500,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 

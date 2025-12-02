@@ -57,13 +57,16 @@ class UserRepository @Inject constructor(
         }
     }
 
-    suspend fun updateLocation(latitude: Double, longitude: Double): Flow<Resource<User>> = flow {
+    suspend fun updateLocation(latitude: Double, longitude: Double, postalCode: String? = null): Flow<Resource<User>> = flow {
         emit(Resource.Loading())
         try {
-            val locationData = mapOf(
+            val locationData = mutableMapOf<String, Any>(
                 "latitude" to latitude,
                 "longitude" to longitude
             )
+            // Include postal code if available (from Android's built-in Geocoder)
+            postalCode?.let { locationData["postalCode"] = it }
+            
             val response = userApi.updateLocation(locationData)
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!

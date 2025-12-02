@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.eco_plate.ui.store
 
 import androidx.compose.animation.*
@@ -11,12 +13,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,8 +33,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.eco_plate.data.models.Item
 import com.example.eco_plate.ui.components.EcoColors
 import com.example.eco_plate.ui.home.ProductItem
+import com.example.eco_plate.utils.Resource
 import kotlinx.coroutines.launch
 
 data class StoreProduct(
@@ -42,89 +50,23 @@ data class StoreProduct(
     val isEcoFriendly: Boolean = false
 )
 
-data class StoreData(
-    val id: String,
-    val name: String,
-    val imageUrl: String,
-    val rating: Float,
-    val reviews: Int,
-    val deliveryTime: String,
-    val deliveryFee: String,
-    val categories: List<String>,
-    val products: List<StoreProduct>
-)
-
-// Store-specific product data
-val storeProducts = mapOf(
-    "1" to StoreData( // Whole Foods
-        id = "1",
-        name = "Whole Foods Market",
-        imageUrl = "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800",
-        rating = 4.8f,
-        reviews = 324,
-        deliveryTime = "10-15 min",
-        deliveryFee = "Free",
-        categories = listOf("Organic", "Fresh Produce", "Bakery", "Dairy"),
-        products = listOf(
-            StoreProduct("wf1", "Organic Avocados", 5.99f, 7.99f, 25, 
-                "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400", "Produce", true),
-            StoreProduct("wf2", "Wild Salmon Fillet", 14.99f, 19.99f, 25,
-                "https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=400", "Seafood"),
-            StoreProduct("wf3", "Organic Kale", 3.49f, 4.99f, 30,
-                "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=400", "Produce", true),
-            StoreProduct("wf4", "Sourdough Bread", 4.99f, null, null,
-                "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Bakery"),
-            StoreProduct("wf5", "Greek Yogurt", 5.49f, 6.99f, 20,
-                "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400", "Dairy"),
-            StoreProduct("wf6", "Organic Strawberries", 6.99f, 8.99f, 22,
-                "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400", "Produce", true)
-        )
-    ),
-    "2" to StoreData( // Trader Joe's
-        id = "2",
-        name = "Trader Joe's",
-        imageUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800",
-        rating = 4.7f,
-        reviews = 412,
-        deliveryTime = "15-20 min",
-        deliveryFee = "$2.99",
-        categories = listOf("Unique Finds", "International", "Snacks", "Wine"),
-        products = listOf(
-            StoreProduct("tj1", "Everything Bagel Seasoning", 2.99f, null, null,
-                "https://images.unsplash.com/photo-1599599810694-b5b37304c041?w=400", "Seasonings"),
-            StoreProduct("tj2", "Cauliflower Gnocchi", 3.99f, 4.99f, 20,
-                "https://images.unsplash.com/photo-1609501676725-7186f017a4b7?w=400", "Frozen"),
-            StoreProduct("tj3", "Cookie Butter", 3.49f, null, null,
-                "https://images.unsplash.com/photo-1560683103-d24b57f4a022?w=400", "Spreads"),
-            StoreProduct("tj4", "Mandarin Chicken", 4.99f, 5.99f, 17,
-                "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=400", "Frozen"),
-            StoreProduct("tj5", "Dark Chocolate Peanut Butter Cups", 4.49f, null, null,
-                "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=400", "Snacks")
-        )
-    ),
-    "3" to StoreData( // Safeway
-        id = "3",
-        name = "Safeway",
-        imageUrl = "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800",
-        rating = 4.5f,
-        reviews = 298,
-        deliveryTime = "5-10 min",
-        deliveryFee = "Free on $35+",
-        categories = listOf("Grocery", "Pharmacy", "Deli", "Bakery"),
-        products = listOf(
-            StoreProduct("sf1", "Fresh Ground Beef", 8.99f, 10.99f, 18,
-                "https://images.unsplash.com/photo-1603048297172-c92544798d5b?w=400", "Meat"),
-            StoreProduct("sf2", "White Bread", 2.49f, 2.99f, 17,
-                "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400", "Bakery"),
-            StoreProduct("sf3", "2% Milk Gallon", 4.49f, null, null,
-                "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400", "Dairy"),
-            StoreProduct("sf4", "Rotisserie Chicken", 7.99f, 9.99f, 20,
-                "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400", "Deli"),
-            StoreProduct("sf5", "Fresh Bananas", 2.99f, 3.49f, 14,
-                "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400", "Produce")
-        )
+// Helper to convert API Item to StoreProduct
+private fun Item.toStoreProduct(): StoreProduct {
+    val discountPercent = if (originalPrice != null && originalPrice > currentPrice) {
+        ((originalPrice - currentPrice) / originalPrice * 100).toInt()
+    } else null
+    
+    return StoreProduct(
+        id = id,
+        name = name,
+        price = currentPrice.toFloat(),
+        originalPrice = originalPrice?.toFloat(),
+        discount = discountPercent,
+        imageUrl = imageUrl ?: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=400",
+        category = category ?: "Other",
+        isEcoFriendly = isClearance == true
     )
-)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,19 +76,65 @@ fun StoreDetailScreen(
     onBackClick: () -> Unit,
     onNavigateToCart: () -> Unit
 ) {
-    val store = remember { storeProducts[storeId] ?: storeProducts["1"]!! }
     var selectedCategory by remember { mutableStateOf("All") }
     val cartItemsCount by viewModel.cartItemsCount.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     
-    val categories = listOf("All") + store.categories
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
+    val isSearching by viewModel.isSearching.observeAsState(false)
+    val isSyncing by viewModel.isSyncing.observeAsState(false)
+    val filteredItemsFromSearch by viewModel.filteredItems.observeAsState(emptyList())
     
-    val filteredProducts = remember(selectedCategory) {
+    // Fetch store items when screen loads
+    LaunchedEffect(storeId) {
+        viewModel.loadStoreItems(storeId)
+        viewModel.loadStoreDetails(storeId)
+    }
+    
+    val storeItemsResource by viewModel.storeItems.observeAsState()
+    val storeDetailsResource by viewModel.storeDetails.observeAsState()
+    
+    val isLoading = storeItemsResource is Resource.Loading
+    
+    // Convert API items to StoreProducts - use filtered items if searching
+    val products = if (searchQuery.isNotBlank()) {
+        filteredItemsFromSearch.map { it.toStoreProduct() }
+    } else {
+        when (val resource = storeItemsResource) {
+            is Resource.Success -> resource.data?.map { it.toStoreProduct() } ?: emptyList()
+            else -> emptyList()
+        }
+    }
+    
+    // Check if sync is in progress (from API response message)
+    val syncInProgress = storeItemsResource is Resource.Success && products.isEmpty() && searchQuery.isBlank()
+    
+    // State for selected product detail
+    var selectedProduct by remember { mutableStateOf<StoreProduct?>(null) }
+    
+    // Get store info from details or items
+    val storeName = when (val resource = storeDetailsResource) {
+        is Resource.Success -> resource.data?.name ?: "Store"
+        else -> "Store"
+    }
+    
+    val storeImageUrl = when (val resource = storeDetailsResource) {
+        is Resource.Success -> resource.data?.imageUrl ?: resource.data?.logo ?: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800"
+        else -> "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800"
+    }
+    
+    // Extract unique categories from products
+    val categories = remember(products) {
+        listOf("All") + products.map { it.category }.distinct()
+    }
+    
+    val filteredProducts = remember(selectedCategory, products) {
         if (selectedCategory == "All") {
-            store.products
+            products
         } else {
-            store.products.filter { it.category == selectedCategory }
+            products.filter { it.category == selectedCategory }
         }
     }
     
@@ -195,8 +183,8 @@ fun StoreDetailScreen(
                         .height(200.dp)
                 ) {
                     AsyncImage(
-                        model = store.imageUrl,
-                        contentDescription = store.name,
+                        model = storeImageUrl,
+                        contentDescription = storeName,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -225,7 +213,7 @@ fun StoreDetailScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = store.name,
+                        text = storeName,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -244,7 +232,7 @@ fun StoreDetailScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "${store.rating} (${store.reviews})",
+                                text = "4.5",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(start = 4.dp)
                             )
@@ -252,31 +240,62 @@ fun StoreDetailScreen(
                         
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                Icons.Outlined.Schedule,
+                                Icons.Outlined.Inventory2,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = store.deliveryTime,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Outlined.LocalShipping,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = store.deliveryFee,
+                                text = "${products.size} items",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(start = 4.dp)
                             )
                         }
                     }
                 }
+            }
+            
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { query ->
+                        searchQuery = query
+                        viewModel.searchInStore(query, forceSync = false)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search products in this store...") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = {
+                                searchQuery = ""
+                                viewModel.clearSearch()
+                            }) {
+                                Icon(Icons.Filled.Clear, contentDescription = "Clear")
+                            }
+                        } else if (isSearching) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            // Force sync when user presses Enter/Search on keyboard
+                            if (searchQuery.isNotBlank()) {
+                                viewModel.searchInStore(searchQuery, forceSync = true)
+                            }
+                        }
+                    )
+                )
             }
             
             // Category Chips
@@ -289,7 +308,14 @@ fun StoreDetailScreen(
                     items(categories) { category ->
                         FilterChip(
                             selected = selectedCategory == category,
-                            onClick = { selectedCategory = category },
+                            onClick = { 
+                                selectedCategory = category
+                                // Clear search when changing category
+                                if (searchQuery.isNotBlank()) {
+                                    searchQuery = ""
+                                    viewModel.clearSearch()
+                                }
+                            },
                             label = { Text(category) }
                         )
                     }
@@ -299,13 +325,111 @@ fun StoreDetailScreen(
             // Products Grid
             item {
                 Text(
-                    text = "Available Products",
+                    text = if (searchQuery.isNotBlank()) "Search Results" else "Available Products",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
             
+            // Loading state
+            if (isLoading || isSyncing || isSearching) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator()
+                            if (isSyncing && searchQuery.isNotBlank()) {
+                                Text(
+                                    text = "Searching grocery stores for \"$searchQuery\"...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else if (isSearching) {
+                                Text(
+                                    text = "Searching...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (filteredProducts.isEmpty()) {
+                // Empty state - only show when not syncing or searching
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (syncInProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Syncing products...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "Products are being fetched for this store. This may take a moment.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        } else {
+                            Icon(
+                                Icons.Outlined.Inventory2,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = if (searchQuery.isNotBlank()) "No products found for \"$searchQuery\"" else "No products available",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = if (searchQuery.isNotBlank()) "Try a different search term" else "Check back later for new items",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // Refresh button
+                        Button(
+                            onClick = { 
+                                viewModel.loadStoreItems(storeId)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Refresh Products")
+                        }
+                    }
+                }
+            } else {
             // Products in Grid Layout
             items(filteredProducts.chunked(2)) { rowProducts ->
                 Row(
@@ -319,8 +443,8 @@ fun StoreDetailScreen(
                             product = product,
                             onAddToCart = {
                                 viewModel.addToCart(
-                                    storeId = store.id,
-                                    storeName = store.name,
+                                        storeId = storeId,
+                                        storeName = storeName,
                                     productId = product.id,
                                     productName = product.name,
                                     price = product.price,
@@ -333,6 +457,7 @@ fun StoreDetailScreen(
                                     )
                                 }
                             },
+                                onClick = { selectedProduct = product },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -342,6 +467,261 @@ fun StoreDetailScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+        }
+    }
+    
+    // Product Detail Dialog
+    selectedProduct?.let { product ->
+        ProductDetailDialog(
+            product = product,
+            storeName = storeName,
+            onDismiss = { selectedProduct = null },
+            onAddToCart = {
+                viewModel.addToCart(
+                    storeId = storeId,
+                    storeName = storeName,
+                    productId = product.id,
+                    productName = product.name,
+                    price = product.price,
+                    imageUrl = product.imageUrl
+                )
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "${product.name} added to cart",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                selectedProduct = null
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductDetailDialog(
+    product: StoreProduct,
+    storeName: String,
+    onDismiss: () -> Unit,
+    onAddToCart: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Product Image
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                ) {
+                    AsyncImage(
+                        model = product.imageUrl,
+                        contentDescription = product.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    
+                    // Close button
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                CircleShape
+                            )
+                    ) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = "Close",
+                            tint = Color.White
+                        )
+                    }
+                    
+                    // Discount badge
+                    product.discount?.let { discount ->
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(12.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFF5252)
+                        ) {
+                            Text(
+                                text = "-$discount% OFF",
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+                
+                // Product Details
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Name
+                    Text(
+                        text = product.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    // Store & Category (stacked for long names)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                Icons.Outlined.Storefront,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = storeName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Category,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = product.category,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    
+                    // Eco-friendly badge
+                    if (product.isEcoFriendly) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.Eco,
+                                contentDescription = null,
+                                tint = EcoColors.Green500,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Eco-Friendly / Clearance Item",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = EcoColors.Green500,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Price Section
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Price",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "$${String.format("%.2f", product.price)}",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (product.discount != null) Color(0xFFFF5252) else MaterialTheme.colorScheme.onSurface
+                                )
+                                product.originalPrice?.let { originalPrice ->
+                                    Text(
+                                        text = "$${String.format("%.2f", originalPrice)}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                                    )
+                                }
+                            }
+                        }
+                        
+                        product.discount?.let { discount ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFFF5252).copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    text = "Save $${String.format("%.2f", (product.originalPrice ?: product.price) - product.price)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFFFF5252),
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Add to Cart Button
+                    Button(
+                        onClick = onAddToCart,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Add to Cart",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
@@ -351,10 +731,11 @@ fun StoreDetailScreen(
 private fun StoreProductCard(
     product: StoreProduct,
     onAddToCart: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -434,29 +815,33 @@ private fun StoreProductCard(
                     text = product.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp
                 )
                 
                 Text(
                     text = product.category,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "$${product.price}",
+                        text = "$${String.format("%.2f", product.price)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (product.discount != null) Color(0xFFFF5252) else MaterialTheme.colorScheme.onSurface
                     )
                     product.originalPrice?.let { originalPrice ->
                         Text(
-                            text = "$${originalPrice}",
+                            text = "$${String.format("%.2f", originalPrice)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough

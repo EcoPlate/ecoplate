@@ -1,5 +1,6 @@
 package com.example.eco_plate.data.repository
 
+import android.util.Log
 import com.example.eco_plate.data.api.InventoryApi
 import com.example.eco_plate.data.models.Item
 import com.example.eco_plate.utils.Resource
@@ -14,6 +15,9 @@ import javax.inject.Singleton
 class InventoryRepository @Inject constructor(
     private val inventoryApi: InventoryApi
 ) {
+    companion object {
+        private const val TAG = "InventoryRepository"
+    }
     suspend fun getStoreItems(
         storeId: String,
         category: String? = null,
@@ -23,17 +27,42 @@ class InventoryRepository @Inject constructor(
     ): Flow<Resource<List<Item>>> = flow {
         emit(Resource.Loading())
         try {
-            val response = inventoryApi.getStoreItems(storeId, category, available, page, limit)
+            // Convert page/limit to skip/take
+            val skip = ((page ?: 1) - 1) * (limit ?: 20)
+            val take = limit ?: 20
+            
+            Log.d(TAG, "Fetching items for store $storeId (skip=$skip, take=$take)")
+            val response = inventoryApi.getStoreItems(
+                storeId = storeId, 
+                category = category, 
+                isAvailable = available,
+                skip = skip,
+                take = take
+            )
+            
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+                val apiResponse = response.body()!!
+                if (apiResponse.success) {
+                    val items = apiResponse.data.data
+                    Log.d(TAG, "Fetched ${items.size} items (total: ${apiResponse.data.total})")
+                    emit(Resource.Success(items))
+                } else {
+                    Log.e(TAG, "API returned success=false")
+                    emit(Resource.Error("Failed to fetch store items"))
+                }
             } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "Failed to fetch store items: ${response.code()} - $errorBody")
                 emit(Resource.Error(response.message() ?: "Failed to fetch store items"))
             }
         } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error fetching store items", e)
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         } catch (e: IOException) {
+            Log.e(TAG, "Network error fetching store items", e)
             emit(Resource.Error("Couldn't reach server. Check your internet connection"))
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching store items", e)
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         }
     }
@@ -59,17 +88,27 @@ class InventoryRepository @Inject constructor(
     suspend fun createItem(item: Map<String, Any>): Flow<Resource<Item>> = flow {
         emit(Resource.Loading())
         try {
+            Log.d(TAG, "Creating item with data: $item")
             val response = inventoryApi.createItem(item)
+            Log.d(TAG, "Create item response code: ${response.code()}")
+            
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+                val createdItem = response.body()!!
+                Log.d(TAG, "Item created successfully: ${createdItem.name} (ID: ${createdItem.id})")
+                emit(Resource.Success(createdItem))
             } else {
-                emit(Resource.Error(response.message() ?: "Failed to create item"))
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "Failed to create item: ${response.code()} - ${response.message()} - $errorBody")
+                emit(Resource.Error(errorBody ?: response.message() ?: "Failed to create item"))
             }
         } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error creating item", e)
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         } catch (e: IOException) {
+            Log.e(TAG, "Network error creating item", e)
             emit(Resource.Error("Couldn't reach server. Check your internet connection"))
         } catch (e: Exception) {
+            Log.e(TAG, "Error creating item", e)
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         }
     }
@@ -77,15 +116,24 @@ class InventoryRepository @Inject constructor(
     suspend fun updateItem(itemId: String, item: Map<String, Any>): Flow<Resource<Item>> = flow {
         emit(Resource.Loading())
         try {
+            Log.d(TAG, "Updating item $itemId with data: $item")
             val response = inventoryApi.updateItem(itemId, item)
+            Log.d(TAG, "Update item response code: ${response.code()}")
+            
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()))
+                val updatedItem = response.body()!!
+                Log.d(TAG, "Item updated successfully: ${updatedItem.name}")
+                emit(Resource.Success(updatedItem))
             } else {
-                emit(Resource.Error(response.message() ?: "Failed to update item"))
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "Failed to update item: ${response.code()} - $errorBody")
+                emit(Resource.Error(errorBody ?: response.message() ?: "Failed to update item"))
             }
         } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error updating item", e)
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
         } catch (e: IOException) {
+            Log.e(TAG, "Network error updating item", e)
             emit(Resource.Error("Couldn't reach server. Check your internet connection"))
         } catch (e: Exception) {
             emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))

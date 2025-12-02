@@ -4,15 +4,35 @@ import com.example.eco_plate.data.models.*
 import retrofit2.Response
 import retrofit2.http.*
 
+/**
+ * Paginated response from inventory endpoints (inner data)
+ */
+data class InventoryItemsData(
+    val data: List<Item>,
+    val total: Int,
+    val skip: Int,
+    val take: Int
+)
+
+/**
+ * Full API response wrapper for inventory items
+ */
+data class InventoryItemsResponse(
+    val success: Boolean,
+    val data: InventoryItemsData,
+    val timestamp: String? = null,
+    val path: String? = null
+)
+
 interface InventoryApi {
     @GET("inventory/stores/{storeId}/items")
     suspend fun getStoreItems(
         @Path("storeId") storeId: String,
         @Query("category") category: String? = null,
-        @Query("available") available: Boolean? = null,
-        @Query("page") page: Int? = 1,
-        @Query("limit") limit: Int? = 20
-    ): Response<List<Item>>
+        @Query("isAvailable") isAvailable: Boolean? = null,
+        @Query("skip") skip: Int? = 0,
+        @Query("take") take: Int? = 100
+    ): Response<InventoryItemsResponse>
 
     @GET("inventory/items/{id}")
     suspend fun getItem(@Path("id") itemId: String): Response<Item>

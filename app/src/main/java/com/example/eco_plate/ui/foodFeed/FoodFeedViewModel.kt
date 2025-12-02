@@ -51,11 +51,15 @@ class FoodFeedViewModel @Inject constructor(
             }
             
             viewModelScope.launch {
+                // Get postal code from Android's built-in Geocoder
+                val postalCode = locationManager.getPostalCodeFromCoordinates(location.latitude, location.longitude)
+                
                 searchRepository.searchItems(
                     latitude = location.latitude,
                     longitude = location.longitude,
                     radius = 10.0,
-                    limit = 50
+                    limit = 50,
+                    postalCode = postalCode
                 ).onEach { result ->
                     _feedItems.value = result
                 }.launchIn(viewModelScope)
@@ -71,12 +75,28 @@ class FoodFeedViewModel @Inject constructor(
             }
             
             viewModelScope.launch {
-                searchRepository.getNearbyStores(
+                // Get postal code from Android's built-in Geocoder
+                val postalCode = locationManager.getPostalCodeFromCoordinates(location.latitude, location.longitude)
+                
+                // Use searchStores which has proper API wrapper format
+                searchRepository.searchStores(
                     latitude = location.latitude,
                     longitude = location.longitude,
-                    limit = 20
+                    radius = 15.0,
+                    limit = 20,
+                    postalCode = postalCode
                 ).onEach { result ->
-                    _nearbyStores.value = result
+                    when (result) {
+                        is Resource.Success -> {
+                            _nearbyStores.value = Resource.Success(result.data?.data ?: emptyList())
+                        }
+                        is Resource.Error -> {
+                            _nearbyStores.value = Resource.Error(result.message ?: "Error loading stores")
+                        }
+                        is Resource.Loading -> {
+                            _nearbyStores.value = Resource.Loading()
+                        }
+                    }
                 }.launchIn(viewModelScope)
             }
         }

@@ -20,6 +20,7 @@
         <item name="colorOnBackground">@color/text_primary</item>
         <item name="colorOnSurface">@color/text_primary</item>
         <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/gray_300</item>
         
         <!-- Error colors -->
         <item name="colorError">@color/error</item>
@@ -76,25 +77,25 @@
     <style name="TextAppearance.EcoPlate.Headline1" parent="TextAppearance.Material3.HeadlineLarge">
         <item name="android:textSize">32sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColor">?colorOnBackground</item>
         <item name="android:letterSpacing">-0.02</item>
     </style>
     
     <style name="TextAppearance.EcoPlate.Headline2" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:textSize">24sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColor">?colorOnBackground</item>
         <item name="android:letterSpacing">-0.02</item>
     </style>
     
     <style name="TextAppearance.EcoPlate.Body" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textColor">?colorOnSurfaceVariant</item>
     </style>
     
     <style name="TextAppearance.EcoPlate.Caption" parent="TextAppearance.Material3.BodySmall">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:textColor">?colorOnSurfaceVariant</item>
     </style>
     
     <!-- Button Styles -->
@@ -128,7 +129,7 @@
     <style name="Widget.EcoPlate.CardView" parent="Widget.Material3.CardView.Elevated">
         <item name="cardElevation">4dp</item>
         <item name="cardCornerRadius">16dp</item>
-        <item name="cardBackgroundColor">@color/white</item>
+        <item name="cardBackgroundColor">?colorSurface</item>
         <item name="cardUseCompatPadding">true</item>
     </style>
     
@@ -155,10 +156,10 @@
     
     <!-- Dialog Style -->
     <style name="ThemeOverlay.EcoPlate.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="colorPrimary">@color/primary_green</item>
-        <item name="colorSecondary">@color/secondary_orange</item>
-        <item name="colorSurface">@color/white</item>
-        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorPrimary">?colorPrimary</item>
+        <item name="colorSecondary">?colorSecondary</item>
+        <item name="colorSurface">?colorSurface</item>
+        <item name="colorOnSurface">?colorOnSurface</item>
         <item name="alertDialogStyle">@style/MaterialAlertDialog.EcoPlate</item>
         <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialog.EcoPlate.Title.Text</item>
         <item name="buttonBarPositiveButtonStyle">@style/Widget.EcoPlate.Button</item>
@@ -173,7 +174,7 @@
     <style name="MaterialAlertDialog.EcoPlate.Title.Text" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">20sp</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColor">?colorOnSurface</item>
     </style>
     
     <!-- Bottom Sheet Style -->
@@ -183,7 +184,7 @@
     
     <style name="Widget.EcoPlate.BottomSheet" parent="Widget.Material3.BottomSheet">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.EcoPlate.BottomSheet</item>
-        <item name="backgroundTint">@color/white</item>
+        <item name="backgroundTint">?colorSurface</item>
         <item name="android:elevation">16dp</item>
     </style>
     
