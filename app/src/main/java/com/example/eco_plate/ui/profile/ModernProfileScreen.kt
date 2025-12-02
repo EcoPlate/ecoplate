@@ -1,5 +1,11 @@
 package com.example.eco_plate.ui.profile
 
+import android.Manifest
+import android.graphics.Bitmap
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,16 +20,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
 import androidx.compose.runtime.collectAsState
 import com.example.eco_plate.R
 import com.example.eco_plate.utils.Resource
+import java.io.File
 
 data class UserProfile(
     val name: String,
@@ -51,6 +61,9 @@ fun ModernProfileScreen(
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val profilePicturePath by viewModel.profilePicturePath.collectAsState()
+    
+    val context = LocalContext.current
     
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
@@ -58,6 +71,36 @@ fun ModernProfileScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showHelpAndSupportDialog by remember { mutableStateOf(false) }
     var showPaymentMethodsDialog by remember { mutableStateOf(false) }
+    var showImageOptionsDialog by remember { mutableStateOf(false) }
+    
+    // Image picker launchers
+    val takePicture = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            viewModel.updateProfilePicture(bitmap)
+            Toast.makeText(context, "Profile picture updated!", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            takePicture.launch(null)
+        } else {
+            Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.updateProfilePicture(uri)
+            Toast.makeText(context, "Profile picture updated!", Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     Scaffold(
@@ -98,7 +141,8 @@ fun ModernProfileScreen(
                     // Profile Header
                     item {
                         ProfileHeader(
-                            profile = profile,
+                            profile = profile.copy(profilePicture = profilePicturePath ?: profile.profilePicture),
+                            onEditProfilePicture = { showImageOptionsDialog = true },
                             onEditEmail = { showEmailDialog = true },
                             onEditPassword = { showPasswordDialog = true }
                         )
@@ -286,11 +330,27 @@ fun ModernProfileScreen(
             }
         )
     }
+    
+    // Image Options Dialog
+    if (showImageOptionsDialog) {
+        EditImageChoiceDialog(
+            onDismiss = { showImageOptionsDialog = false },
+            onChooseGallery = {
+                showImageOptionsDialog = false
+                imagePicker.launch("image/*")
+            },
+            onChooseCamera = {
+                showImageOptionsDialog = false
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        )
+    }
 }
 
 @Composable
 private fun ProfileHeader(
     profile: UserProfile,
+    onEditProfilePicture: () -> Unit = {},
     onEditEmail: () -> Unit = {},
     onEditPassword: () -> Unit = {}
 ) {
@@ -307,22 +367,65 @@ private fun ProfileHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Profile Picture
+            // Profile Picture with Edit Button
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(
-                        EcoColors.Green100
-                    ),
+                modifier = Modifier.size(110.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = profile.name.split(" ").map { it.first() }.joinToString(""),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = EcoColors.Green600
-                )
+                // Profile Picture or Initials
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(EcoColors.Green100)
+                        .clickable { onEditProfilePicture() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (profile.profilePicture != null) {
+                        AsyncImage(
+                            model = if (profile.profilePicture.startsWith("/")) {
+                                File(profile.profilePicture)
+                            } else {
+                                profile.profilePicture
+                            },
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = profile.name.split(" ")
+                                .filter { it.isNotEmpty() }
+                                .map { it.first().uppercaseChar() }
+                                .take(2)
+                                .joinToString(""),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = EcoColors.Green600
+                        )
+                    }
+                }
+                
+                // Edit button overlay
+                IconButton(
+                    onClick = onEditProfilePicture,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(32.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = "Edit Profile Picture",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
+                    )
+                }
             }
             
             // Name and Email
