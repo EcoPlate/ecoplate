@@ -62,7 +62,7 @@ class HomeFragment : Fragment() {
                                     findNavController().navigate(
                                         com.example.eco_plate.R.id.navigation_notifications
                                     )
-                                }
+                                },
                     )
                 }
             }
