@@ -79,141 +79,62 @@ fun ModernOrdersScreen(
     var selectedTab by remember { mutableStateOf(0) }
     
     val tabs = listOf("Active", "Past Orders", "Cancelled")
-    
-    // Sample orders data
-    val activeOrders = remember {
-        listOf(
-            Order(
-                id = "1",
-                orderNumber = "ECO-2024-001",
-                storeName = "Whole Foods Market",
-                items = listOf(
-                    OrderItem("Organic Avocados", 2, 4.49f),
-                    OrderItem("Fresh Strawberries", 1, 3.49f),
-                    OrderItem("Sourdough Bread", 1, 2.49f),
-                    OrderItem("Almond Milk", 2, 3.99f),
-                    OrderItem("Free Range Eggs", 1, 5.99f)
-                ),
-                totalAmount = 26.94f,
-                totalSaved = 12.50f,
-                status = OrderStatus.OUT_FOR_DELIVERY,
-                orderDate = Date(),
-                estimatedDelivery = "2:30 PM - 2:45 PM",
-                deliveryAddress = "789 Oak Street, Vancouver"
-            ),
-            Order(
-                id = "2",
-                orderNumber = "ECO-2024-002",
-                storeName = "Trader Joe's",
-                items = listOf(
-                    OrderItem("Mixed Vegetables", 3, 5.99f),
-                    OrderItem("Greek Yogurt", 2, 3.99f),
-                    OrderItem("Quinoa Salad", 1, 7.99f)
-                ),
-                totalAmount = 33.94f,
-                totalSaved = 15.00f,
-                status = OrderStatus.PREPARING,
-                orderDate = Date(),
-                estimatedDelivery = "3:00 PM - 3:30 PM",
-                deliveryAddress = "456 Maple Drive, Vancouver"
-            ),
-            Order(
-                id = "3",
-                orderNumber = "ECO-2024-003",
-                storeName = "Save-On-Foods",
-                items = listOf(
-                    OrderItem("Fresh Salmon", 1, 12.99f),
-                    OrderItem("Asparagus Bundle", 1, 4.99f),
-                    OrderItem("Brown Rice", 1, 3.49f),
-                    OrderItem("Lemon", 2, 0.79f)
-                ),
-                totalAmount = 23.05f,
-                totalSaved = 8.00f,
-                status = OrderStatus.CONFIRMED,
-                orderDate = Date(),
-                estimatedDelivery = "4:00 PM - 4:30 PM",
-                deliveryAddress = "321 Pine Street, Vancouver"
-            )
-        )
-    }
-    
-    val pastOrders = remember {
-        listOf(
-            Order(
-                id = "4",
-                orderNumber = "ECO-2024-004",
-                storeName = "Safeway",
-                items = listOf(
-                    OrderItem("Milk (2L)", 1, 2.99f),
-                    OrderItem("Eggs (12 pack)", 1, 3.49f),
-                    OrderItem("Whole Wheat Bread", 2, 2.49f),
-                    OrderItem("Bananas", 6, 1.99f),
-                    OrderItem("Ground Coffee", 1, 8.99f)
-                ),
-                totalAmount = 22.44f,
-                totalSaved = 9.50f,
-                status = OrderStatus.DELIVERED,
-                orderDate = Date(System.currentTimeMillis() - 86400000), // Yesterday
-                deliveryAddress = "123 Main Street, Vancouver"
-            ),
-            Order(
-                id = "5",
-                orderNumber = "ECO-2024-005",
-                storeName = "Urban Fare",
-                items = listOf(
-                    OrderItem("Artisan Cheese", 1, 15.99f),
-                    OrderItem("Prosciutto", 1, 12.99f),
-                    OrderItem("Olive Oil", 1, 18.99f),
-                    OrderItem("Fresh Pasta", 2, 7.99f)
-                ),
-                totalAmount = 63.95f,
-                totalSaved = 18.00f,
-                status = OrderStatus.DELIVERED,
-                orderDate = Date(System.currentTimeMillis() - 172800000), // 2 days ago
-                deliveryAddress = "555 Beach Avenue, Vancouver"
-            ),
-            Order(
-                id = "6",
-                orderNumber = "ECO-2024-006",
-                storeName = "T&T Supermarket",
-                items = listOf(
-                    OrderItem("Sushi Grade Tuna", 1, 24.99f),
-                    OrderItem("Soy Sauce", 1, 3.49f),
-                    OrderItem("Wasabi", 1, 2.99f),
-                    OrderItem("Nori Sheets", 1, 4.99f),
-                    OrderItem("Sushi Rice", 1, 6.99f)
-                ),
-                totalAmount = 43.45f,
-                totalSaved = 12.00f,
-                status = OrderStatus.DELIVERED,
-                orderDate = Date(System.currentTimeMillis() - 259200000), // 3 days ago
-                deliveryAddress = "888 Granville Street, Vancouver"
-            ),
-            Order(
-                id = "7",
-                orderNumber = "ECO-2024-007",
-                storeName = "Fresh St. Market",
-                items = listOf(
-                    OrderItem("Organic Kale", 2, 3.99f),
-                    OrderItem("Coconut Water", 6, 2.49f),
-                    OrderItem("Protein Powder", 1, 34.99f),
-                    OrderItem("Chia Seeds", 1, 8.99f)
-                ),
-                totalAmount = 66.90f,
-                totalSaved = 20.00f,
-                status = OrderStatus.DELIVERED,
-                orderDate = Date(System.currentTimeMillis() - 345600000), // 4 days ago
-                deliveryAddress = "999 Davie Street, Vancouver"
-            )
-        )
-    }
 
-    // Update Widget
+    // Load real orders from API
     LaunchedEffect(Unit) {
         viewModel.loadOrders()
     }
 
     val ordersState by viewModel.ordersState.collectAsState()
+    
+    // Convert API orders to UI orders
+    val allOrders = remember(ordersState) {
+        when (ordersState) {
+            is com.example.eco_plate.utils.Resource.Success -> {
+                (ordersState as com.example.eco_plate.utils.Resource.Success<List<com.example.eco_plate.data.models.Order>>).data?.map { apiOrder ->
+                    Order(
+                        id = apiOrder.id,
+                        orderNumber = apiOrder.orderNumber,
+                        storeName = apiOrder.store?.name ?: "Store",
+                        storeImage = null,
+                        items = apiOrder.items?.map { item ->
+                            OrderItem(
+                                name = item.itemSnapshot?.name ?: "Item",
+                                quantity = item.quantity,
+                                price = item.price.toFloat(),
+                                image = item.itemSnapshot?.images?.firstOrNull()
+                            )
+                        } ?: emptyList(),
+                        totalAmount = apiOrder.total.toFloat(),
+                        totalSaved = apiOrder.discount.toFloat(),
+                        status = when (apiOrder.status.uppercase()) {
+                            "PENDING" -> OrderStatus.PENDING
+                            "CONFIRMED" -> OrderStatus.CONFIRMED
+                            "PREPARING" -> OrderStatus.PREPARING
+                            "READY", "READY_FOR_PICKUP" -> OrderStatus.READY_FOR_PICKUP
+                            "OUT_FOR_DELIVERY" -> OrderStatus.OUT_FOR_DELIVERY
+                            "DELIVERED", "PICKED_UP" -> OrderStatus.DELIVERED
+                            "CANCELLED" -> OrderStatus.CANCELLED
+                            else -> OrderStatus.PENDING
+                        },
+                        orderDate = try {
+                            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).parse(apiOrder.createdAt) ?: Date()
+                        } catch (e: Exception) { Date() },
+                        estimatedDelivery = null,
+                        deliveryAddress = apiOrder.store?.address ?: ""
+                    )
+                } ?: emptyList()
+            }
+            else -> emptyList()
+        }
+    }
+    
+    // Separate active and past orders
+    val activeOrders = allOrders.filter { 
+        it.status in listOf(OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PREPARING, OrderStatus.READY_FOR_PICKUP, OrderStatus.OUT_FOR_DELIVERY) 
+    }
+    val pastOrders = allOrders.filter { it.status == OrderStatus.DELIVERED }
+    val cancelledOrders = allOrders.filter { it.status == OrderStatus.CANCELLED }
     
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
@@ -252,21 +173,47 @@ fun ModernOrdersScreen(
             }
             
             // Content based on selected tab
-            when (selectedTab) {
-                0 -> ActiveOrdersContent(
-                    orders = activeOrders,
-                    onOrderClick = onNavigateToOrderDetail,
-                    onTrackOrder = onTrackOrder
-                )
-                1 -> PastOrdersContent(
-                    orders = pastOrders,
-                    onOrderClick = onNavigateToOrderDetail,
-                    onReorder = onNavigateToReorder
-                )
-                2 -> EmptyOrdersView(
-                    message = "No cancelled orders",
-                    description = "Orders you've cancelled will appear here"
-                )
+            when (ordersState) {
+                is com.example.eco_plate.utils.Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                is com.example.eco_plate.utils.Resource.Error -> {
+                    EmptyOrdersView(
+                        message = "Error loading orders",
+                        description = (ordersState as com.example.eco_plate.utils.Resource.Error).message ?: "Please try again"
+                    )
+                }
+                else -> {
+                    when (selectedTab) {
+                        0 -> ActiveOrdersContent(
+                            orders = activeOrders,
+                            onOrderClick = onNavigateToOrderDetail,
+                            onTrackOrder = onTrackOrder
+                        )
+                        1 -> PastOrdersContent(
+                            orders = pastOrders,
+                            onOrderClick = onNavigateToOrderDetail,
+                            onReorder = onNavigateToReorder
+                        )
+                        2 -> if (cancelledOrders.isEmpty()) {
+                            EmptyOrdersView(
+                                message = "No cancelled orders",
+                                description = "Orders you've cancelled will appear here"
+                            )
+                        } else {
+                            PastOrdersContent(
+                                orders = cancelledOrders,
+                                onOrderClick = onNavigateToOrderDetail,
+                                onReorder = onNavigateToReorder
+                            )
+                        }
+                    }
+                }
             }
         }
     }
