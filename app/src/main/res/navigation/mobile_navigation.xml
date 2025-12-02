@@ -70,6 +70,15 @@
         android:id="@+id/navigation_store_detail"
         android:name="com.example.eco_plate.ui.store.StoreDetailFragment"
         android:label="Store" />
-    
+
+    <fragment
+        android:id="@+id/navigation_checkout"
+        android:name="com.example.eco_plate.ui.checkout.CheckoutFragment"
+        android:label="Checkout" />
+
+    <fragment
+        android:id="@+id/navigation_order_success"
+        android:name="com.example.eco_plate.ui.checkout.OrderSuccessFragment"
+        android:label="Order Success" />
         
 </navigation>

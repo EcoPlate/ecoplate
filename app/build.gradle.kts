@@ -29,12 +29,16 @@ android {
             // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
             // Using Railway hosted backend
             buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
+            // Stripe test publishable key
+            buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"pk_test_51QShCmBNrRwRN8PQv6eHNNbnAKGOWK5aeB5KBBMmNh3c1xFPTGXHQX7i4F5mCFYO3nE7u8YpTVMVRNy7TsC8gJpD00sJQXDyjS\"")
             isMinifyEnabled = false
         }
         release {
             // Using Railway hosted backend (production)
             buildConfigField("String", "BASE_URL", "\"https://ecoplate-backend-production.up.railway.app/v1/\"")
             // buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/v1/\"")
+            // Stripe test publishable key
+            buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"pk_test_51QShCmBNrRwRN8PQv6eHNNbnAKGOWK5aeB5KBBMmNh3c1xFPTGXHQX7i4F5mCFYO3nE7u8YpTVMVRNy7TsC8gJpD00sJQXDyjS\"")
 
             isMinifyEnabled = false
             proguardFiles(
@@ -174,4 +178,6 @@ dependencies {
     //Maps Addresses
     implementation("com.google.android.libraries.places:places:3.5.0")
 
+    // Stripe SDK for payments
+    implementation("com.stripe:stripe-android:20.35.0")
 }
