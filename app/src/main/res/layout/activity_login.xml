@@ -161,7 +161,7 @@
                 android:id="@+id/btnLogin"
                 style="@style/Widget.EcoPlate.Button"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Sign In"
                 android:textAllCaps="false"
