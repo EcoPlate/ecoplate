@@ -91,16 +91,21 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    // Jetpack Compose
+    // Jetpack Compose BOM for consistent versions
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.compose.ui:ui:1.7.5")
-    implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.7.5")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.navigation:navigation-compose:2.8.3")
-    implementation("androidx.compose.animation:animation:1.7.5")
-    implementation("androidx.compose.material:material-icons-extended:1.7.5")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.5")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.material:material-icons-extended")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     
     // Accompanist libraries for additional Compose features
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
@@ -145,7 +150,7 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
     
     // Compose LiveData
-    implementation("androidx.compose.runtime:runtime-livedata:1.7.5")
+    implementation("androidx.compose.runtime:runtime-livedata")
     
     // SplashScreen API
     implementation("androidx.core:core-splashscreen:1.0.1")
