@@ -20,6 +20,7 @@
         <item name="colorOnBackground">@color/gray_100</item>
         <item name="colorOnSurface">@color/gray_100</item>
         <item name="colorOnSurfaceVariant">@color/gray_300</item>
+        <item name="colorOutline">@color/gray_600</item>
         
         <!-- Error colors -->
         <item name="colorError">@color/secondary_red</item>

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -46,9 +47,13 @@ import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -246,22 +251,20 @@ fun StoreHomeScreen (
     viewModel: StoreHomeViewModel,
     onBackClick: () -> Unit,
     onProductClick: (String) -> Unit = {},
-    //onNavigateToCart: () -> Unit
+    onAddNewItem: () -> Unit = {},
+    showBackButton: Boolean = false // Store owners don't need back button on their home
 ) {
     // Observe store data from ViewModel
     val storeItems by viewModel.storeItems.observeAsState()
     val currentStore by viewModel.currentStore.observeAsState()
     
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedCategory by remember { mutableStateOf<String?>("All") }
     var searchQuery by remember { mutableStateOf("") }
     var showFilters by remember { mutableStateOf(false) }
     var filters by remember { mutableStateOf(SearchFilter()) }
     var isSearching by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val recentSearches = remember {
-        listOf("Organic Avocados", "Whole Wheat Bread", "Almond Milk", "Fresh Strawberries")
-    }
     
     // Get categories from actual items
     val categories = remember(storeItems) {
@@ -280,13 +283,13 @@ fun StoreHomeScreen (
                 originalPrice = if ((item.originalPrice ?: 0.0) > item.discountedPrice) {
                     item.originalPrice?.toFloat()
                 } else null,
-                discount = item.discountPercentage.toInt(),
+                discount = if (item.discountPercentage > 0) item.discountPercentage.toInt() else null,
                 quantity = item.quantity.toString(),
-                imageUrl = item.imageUrl ?: "https://via.placeholder.com/150",
+                imageUrl = item.imageUrl ?: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400",
                 isEdited = false,
                 expiryDate = item.expiryDate ?: "",
                 description = item.description ?: "",
-                isEcoFriendly = false
+                isEcoFriendly = item.tags?.any { it.contains("organic", ignoreCase = true) || it.contains("eco", ignoreCase = true) } == true
             )
         } ?: emptyList()
     }
@@ -297,6 +300,11 @@ fun StoreHomeScreen (
     LaunchedEffect(storeId) {
         viewModel.loadStoreData(storeId)
         viewModel.loadStoreItems(storeId)
+    }
+    
+    // Refresh when coming back to this screen
+    LaunchedEffect(Unit) {
+        viewModel.refreshStore()
     }
 
 
@@ -319,14 +327,38 @@ fun StoreHomeScreen (
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "Add Items to Inventory",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            text = currentStore?.data?.name ?: "My Store",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${allProducts.size} products",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                navigationIcon = {
+                    if (showBackButton) {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onAddNewItem) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add Product")
+                    }
+                    IconButton(onClick = { viewModel.refreshStore() }) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
@@ -367,26 +399,66 @@ fun StoreHomeScreen (
                     }
                 }
             }
-            // Recent Searches (show when no search)
-            if (searchQuery.isEmpty()) {
+            // Show loading state
+            if (storeItems is com.example.eco_plate.utils.Resource.Loading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = EcoColors.Green600)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Loading your products...")
+                        }
+                    }
+                }
+            }
+            // Show empty state
+            else if (allProducts.isEmpty() && searchQuery.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                    //Recent Searches Suggestion
-                    SearchSuggestionSection(
-                        title = "Recent Searches",
-                        icon = Icons.Outlined.History,
-                        suggestions = recentSearches,
-                        onSuggestionClick = { searchQuery = it }
-                    )
+                        Icon(
+                            Icons.Outlined.Inventory2,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Text(
+                            text = "No products yet",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Add your first product to start selling",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = onAddNewItem,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = EcoColors.Green600
+                            )
+                        ) {
+                            Icon(Icons.Filled.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add First Product")
+                        }
                     }
                 }
             }
-            else{
+            // Show search results or all products
+            else {
                 // Search Results
                 if (isSearching) {
                     item {
@@ -400,7 +472,7 @@ fun StoreHomeScreen (
                         }
                     }
                 }
-                else if (searchResults.isEmpty()) {
+                else if (searchResults.isEmpty() && searchQuery.isNotEmpty()) {
                     item {
                         NoResultsFound(searchQuery)
                     }
@@ -415,7 +487,7 @@ fun StoreHomeScreen (
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "${searchResults.size} results",
+                                text = "${searchResults.size} products",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -487,17 +559,43 @@ fun StoreHomeScreen (
                 product = productToEdit!!,
                 onDismiss = { showQuickEditSheet = false },
                 onProductUpdate = { updatedProduct ->
-                    // TODO: Call a viewModel function to save the
-                    // updatedProduct to your database or repository.
                     Log.d("QuickEdit", "Saving updated product: $updatedProduct")
-                    // You might also want to show a Snackbar confirmation here.
-                },
-//                onNavigateToFullEdit = { productId ->
-//                    // TODO: Implement navigation to your full NewItemScreen for detailed editing.
-//                    showQuickEditSheet = false // Close the sheet before navigating
-//                    // Example: navController.navigate("newItemScreen_route/$productId")
-//                    Log.d("QuickEdit", "Navigating to full edit for product ID: $productId")
-//                }
+                    
+                    // Calculate new price based on discount percentage
+                    val discountValue = updatedProduct.discount ?: 0
+                    val originalPriceValue: Double = updatedProduct.originalPrice?.toDouble() ?: updatedProduct.price.toDouble()
+                    val newPrice: Double = if (discountValue > 0) {
+                        originalPriceValue * (1.0 - discountValue.toDouble() / 100.0)
+                    } else {
+                        originalPriceValue
+                    }
+                    
+                    // Convert date to ISO-8601 format (Prisma expects full datetime)
+                    val isoExpiryDate = updatedProduct.expiryDate.takeIf { it.isNotBlank() }?.let { date ->
+                        // If it's already ISO format, use as-is; otherwise append time component
+                        if (date.contains("T")) date else "${date}T23:59:59.000Z"
+                    }
+                    
+                    // Call viewModel to save to database
+                    // Backend calculates discount from currentPrice and originalPrice
+                    viewModel.updateItem(
+                        itemId = updatedProduct.id,
+                        stockQuantity = updatedProduct.quantity.toIntOrNull(),
+                        expiryDate = isoExpiryDate,
+                        bestBefore = isoExpiryDate,
+                        currentPrice = newPrice,
+                        originalPrice = originalPriceValue,
+                        isClearance = discountValue > 20
+                    )
+                    
+                    // Show confirmation
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "${updatedProduct.name} updated successfully",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
             )
         }
 
@@ -582,21 +680,21 @@ private fun StoreProductCard(
 //                    )
 //                }
                 IconButton(
-                    onClick = onEditClick, // Use the new callback
+                    onClick = onEditClick,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(4.dp)
                         .size(32.dp)
                         .background(
-                            MaterialTheme.colorScheme.secondary, // Use a distinct color
+                            EcoColors.Green600,
                             CircleShape
                         )
                 ) {
                     Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Edit, and add",
+                        Icons.Filled.Edit,
+                        contentDescription = "Edit product",
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
 

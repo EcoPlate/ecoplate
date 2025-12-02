@@ -147,4 +147,30 @@ object NetworkModule {
     fun provideOrderApi(retrofit: Retrofit): OrderApi {
         return retrofit.create(OrderApi::class.java)
     }
+
+    // Open Food Facts API for barcode lookup (no auth required)
+    @Provides
+    @Singleton
+    fun provideBarcodeApi(gson: Gson): BarcodeApi {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl("https://world.openfoodfacts.org/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(BarcodeApi::class.java)
+    }
 }

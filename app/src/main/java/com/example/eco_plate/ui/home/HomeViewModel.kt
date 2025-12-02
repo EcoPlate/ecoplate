@@ -9,6 +9,7 @@ import com.example.eco_plate.data.models.Item
 import com.example.eco_plate.data.repository.CartRepository
 import com.example.eco_plate.data.repository.SearchRepository
 import com.example.eco_plate.data.repository.StoreRepository
+import com.example.eco_plate.ui.location.LocationManager
 import com.example.eco_plate.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val searchRepository: SearchRepository,
     private val storeRepository: StoreRepository,
-    private val cartRepository: CartRepository
+    private val cartRepository: CartRepository,
+    private val locationManager: LocationManager
 ) : ViewModel() {
 
     private val _nearbyStores = MutableLiveData<Resource<List<Store>>>()
@@ -34,12 +36,30 @@ class HomeViewModel @Inject constructor(
 
     fun loadNearbyStores(latitude: Double, longitude: Double) {
         viewModelScope.launch {
-            searchRepository.getNearbyStores(latitude, longitude, 10)
-                .onEach { result ->
-                    _nearbyStores.value = result
-                    _isLoading.value = result is Resource.Loading
+            // Get postal code from Android's built-in Geocoder
+            val postalCode = locationManager.getPostalCodeFromCoordinates(latitude, longitude)
+            
+            // Use searchStores which has proper API wrapper format (same as searchItems)
+            searchRepository.searchStores(
+                latitude = latitude,
+                longitude = longitude,
+                radius = 15.0,  // 15km radius
+                limit = 20,
+                postalCode = postalCode
+            ).onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _nearbyStores.value = Resource.Success(result.data?.data ?: emptyList())
+                    }
+                    is Resource.Error -> {
+                        _nearbyStores.value = Resource.Error(result.message ?: "Error loading stores")
+                    }
+                    is Resource.Loading -> {
+                        _nearbyStores.value = Resource.Loading()
+                    }
                 }
-                .launchIn(viewModelScope)
+                _isLoading.value = result is Resource.Loading
+            }.launchIn(viewModelScope)
         }
     }
 
@@ -52,13 +72,17 @@ class HomeViewModel @Inject constructor(
         limit: Int = 50  // Get more products to show on home
     ) {
         viewModelScope.launch {
+            // Get postal code from Android's built-in Geocoder
+            val postalCode = locationManager.getPostalCodeFromCoordinates(latitude, longitude)
+            
             searchRepository.searchItems(
                 latitude = latitude,
                 longitude = longitude,
                 category = category,
                 query = query,
                 minDiscount = minDiscount,  // Don't force discount filter
-                limit = limit  // Pass limit to get more products
+                limit = limit,  // Pass limit to get more products
+                postalCode = postalCode
             ).onEach { result ->
                 when (result) {
                     is Resource.Success -> {

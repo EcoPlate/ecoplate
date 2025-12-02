@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.example.eco_plate.R
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -38,18 +39,12 @@ class MapFragment : Fragment() {
                             onBackClick = {
                                 findNavController().navigateUp()
                             },
-                            onCallDriver = {
-                                // Handle call driver - could open dialer
-                                // val intent = Intent(Intent.ACTION_DIAL).apply {
-                                //     data = Uri.parse("tel:+15551234567")
-                                // }
-                                // startActivity(intent)
-                            },
-                            onMessageDriver = {
-                                // Handle message driver
-                            },
-                            onReportIssue = {
-                                // Handle report issue
+                            onStoreClick = { storeId ->
+                                // Navigate to store detail screen
+                                val bundle = Bundle().apply {
+                                    putString("storeId", storeId)
+                                }
+                                findNavController().navigate(R.id.navigation_store_detail, bundle)
                             }
                         )
                     }

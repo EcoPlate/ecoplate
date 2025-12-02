@@ -14,7 +14,13 @@ data class SignUpRequest(
     val storeName: String? = null,
     val storeAddress: String? = null,
     val storePhone: String? = null,
-    val storeDescription: String? = null
+    val storeDescription: String? = null,
+    // Store location fields
+    val storeCity: String? = null,
+    val storeProvince: String? = null,
+    val storePostalCode: String? = null,
+    val storeLatitude: Double? = null,
+    val storeLongitude: Double? = null
 )
 
 data class BusinessSignUpRequest(

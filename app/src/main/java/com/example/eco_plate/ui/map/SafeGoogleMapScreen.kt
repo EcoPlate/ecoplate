@@ -1,9 +1,7 @@
 package com.example.eco_plate.ui.map
 
 import android.Manifest
-import android.content.pm.PackageManager
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,20 +13,18 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.eco_plate.ui.components.EcoColors
+import com.example.eco_plate.utils.Resource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -37,72 +33,107 @@ import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
-
-// Vancouver area stores with real coordinates
-data class StoreLocation(
-    val id: String,
-    val name: String,
-    val address: String,
-    val location: LatLng,
-    val type: String,
-    val rating: Float = 4.5f,
-    val distance: String = "1.2 km"
-)
-
-// Sample stores around Vancouver
-val vancouverStores = listOf(
-    StoreLocation("1", "Whole Foods Market", "510 W 8th Ave, Vancouver", LatLng(49.2638, -123.1148), "Grocery"),
-    StoreLocation("2", "Trader Joe's", "2205 W 4th Ave, Vancouver", LatLng(49.2685, -123.1570), "Grocery"),
-    StoreLocation("3", "Safeway Broadway", "1766 W Broadway, Vancouver", LatLng(49.2635, -123.1425), "Grocery"),
-    StoreLocation("4", "Save-On-Foods", "2308 Cambie St, Vancouver", LatLng(49.2650, -123.1149), "Grocery"),
-    StoreLocation("5", "IGA Marketplace", "909 Burrard St, Vancouver", LatLng(49.2815, -123.1248), "Grocery"),
-    StoreLocation("6", "T&T Supermarket", "179 Keefer Pl, Vancouver", LatLng(49.2794, -123.1087), "Asian Grocery"),
-    StoreLocation("7", "Fresh St. Market", "1650 Davie St, Vancouver", LatLng(49.2859, -123.1374), "Specialty"),
-    StoreLocation("8", "Urban Fare", "305 Bute St, Vancouver", LatLng(49.2863, -123.1317), "Premium Grocery"),
-    StoreLocation("9", "Choices Markets", "1888 W 1st Ave, Vancouver", LatLng(49.2708, -123.1480), "Organic"),
-    StoreLocation("10", "Nesters Market", "990 Seymour St, Vancouver", LatLng(49.2781, -123.1192), "Local")
-)
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SafeGoogleMapScreen(
+    viewModel: MapViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {},
+    onStoreClick: (String) -> Unit = {},
     onCallDriver: () -> Unit = {},
     onMessageDriver: () -> Unit = {},
     onReportIssue: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var selectedStore by remember { mutableStateOf<StoreLocation?>(null) }
+    var selectedStore by remember { mutableStateOf<MapStore?>(null) }
     var isBottomSheetExpanded by remember { mutableStateOf(false) }
     var mapLoadError by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Observe ViewModel data
+    val userLocation by viewModel.userLocation.observeAsState()
+    val storesResource by viewModel.stores.observeAsState()
+    val isLocationLoading by viewModel.isLocationLoading.observeAsState(true)
+    val locationError by viewModel.locationError.observeAsState()
     
     // Permission state
     val locationPermissionState = rememberPermissionState(
         permission = Manifest.permission.ACCESS_FINE_LOCATION
     )
     
-    // Default location (Downtown Vancouver)
-    val defaultLocation = LatLng(49.2827, -123.1207)
-    var currentLocation by remember { mutableStateOf(defaultLocation) }
-    
-    // Simulate driver location
-    val driverLocation = remember {
-        val randomStore = vancouverStores.random()
-        LatLng(
-            randomStore.location.latitude + Random.nextDouble(-0.01, 0.01),
-            randomStore.location.longitude + Random.nextDouble(-0.01, 0.01)
-        )
+    // Request permission on launch if not granted
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (!locationPermissionState.status.isGranted) {
+            locationPermissionState.launchPermissionRequest()
+        } else {
+            // Permission granted, refresh location
+            viewModel.loadUserLocation()
+        }
     }
+    
+    // Show error snackbar if location failed
+    LaunchedEffect(locationError) {
+        locationError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                actionLabel = "Retry",
+                duration = SnackbarDuration.Long
+            ).let { result ->
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.loadUserLocation()
+                }
+            }
+        }
+    }
+    
+    // Get stores from API
+    val stores = when (val resource = storesResource) {
+        is Resource.Success -> resource.data ?: emptyList()
+        else -> emptyList()
+    }
+    
+    val isLoading = storesResource is Resource.Loading || isLocationLoading
+    
+    // Default location (Downtown Vancouver) if user location not available
+    val currentLocation = userLocation ?: LatLng(49.2827, -123.1207)
     
     // Camera position state
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(currentLocation, 13f)
     }
     
+    // Track if we should show "Search this area" button
+    val showSearchThisArea by viewModel.showSearchThisArea.observeAsState(false)
+    
+    // Update camera when user location changes (only on first load)
+    var hasInitializedCamera by remember { mutableStateOf(false) }
+    LaunchedEffect(userLocation) {
+        if (!hasInitializedCamera && userLocation != null) {
+            userLocation?.let { location ->
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(location, 14f)
+                )
+                hasInitializedCamera = true
+            }
+        }
+    }
+    
+    // Listen for camera movements to detect when user explores new areas
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving && hasInitializedCamera) {
+            // Camera stopped moving, check if we should show "Search this area"
+            val projection = cameraPositionState.projection
+            val bounds = projection?.visibleRegion?.latLngBounds
+            if (bounds != null) {
+                val center = cameraPositionState.position.target
+                val visibleRadius = viewModel.calculateVisibleRadius(bounds)
+                viewModel.onCameraMoved(center, visibleRadius)
+            }
+        }
+    }
+    
     // Map properties
-    val mapProperties by remember {
+    val mapProperties by remember(locationPermissionState.status.isGranted) {
         mutableStateOf(
             MapProperties(
                 isMyLocationEnabled = locationPermissionState.status.isGranted,
@@ -128,87 +159,108 @@ fun SafeGoogleMapScreen(
         // Try to load Google Map with error handling
         if (!mapLoadError) {
             GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState = cameraPositionState,
-                    properties = mapProperties,
-                    uiSettings = mapUiSettings,
-                    onMapLoaded = {
-                        // Map loaded successfully
-                        coroutineScope.launch {
-                            delay(500)
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(currentLocation, 14f)
-                            )
-                        }
-                    }
-                ) {
-                    // Current location marker
-                    Marker(
-                        state = MarkerState(position = currentLocation),
-                        title = "Your Location",
-                        snippet = "Current delivery address",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                    )
-                    
-                    // Store markers
-                    vancouverStores.forEach { store ->
-                        Marker(
-                            state = MarkerState(position = store.location),
-                            title = store.name,
-                            snippet = "${store.type} • ${store.rating}★ • ${store.distance}",
-                            icon = BitmapDescriptorFactory.defaultMarker(
-                                when (store.type) {
-                                    "Grocery" -> BitmapDescriptorFactory.HUE_GREEN
-                                    "Asian Grocery" -> BitmapDescriptorFactory.HUE_YELLOW
-                                    "Premium Grocery" -> BitmapDescriptorFactory.HUE_VIOLET
-                                    "Organic" -> BitmapDescriptorFactory.HUE_CYAN
-                                    else -> BitmapDescriptorFactory.HUE_RED
-                                }
-                            ),
-                            onClick = {
-                                selectedStore = store
-                                isBottomSheetExpanded = true
-                                false
-                            }
-                        )
-                    }
-                    
-                    // Driver marker (if showing delivery tracking)
-                    Marker(
-                        state = MarkerState(position = driverLocation),
-                        title = "Driver",
-                        snippet = "On the way",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
-                        rotation = 45f
-                    )
-                    
-                    // Draw route from selected store to current location
-                    selectedStore?.let { store ->
-                        Polyline(
-                            points = listOf(
-                                store.location,
-                                LatLng(
-                                    (store.location.latitude + currentLocation.latitude) / 2,
-                                    (store.location.longitude + currentLocation.longitude) / 2
-                                ),
-                                currentLocation
-                            ),
-                            color = Color(0xFF2BAE66),
-                            width = 10f
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                properties = mapProperties,
+                uiSettings = mapUiSettings,
+                onMapLoaded = {
+                    // Map loaded successfully
+                    coroutineScope.launch {
+                        delay(500)
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLngZoom(currentLocation, 14f)
                         )
                     }
                 }
+            ) {
+                // Current location marker
+                Marker(
+                    state = MarkerState(position = currentLocation),
+                    title = "Your Location",
+                    snippet = "You are here",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                )
+                
+                // Store markers from API
+                stores.forEach { store ->
+                    Marker(
+                        state = MarkerState(position = store.location),
+                        title = store.name,
+                        snippet = "${store.type} • ${store.rating}★ • ${store.distance}",
+                        icon = BitmapDescriptorFactory.defaultMarker(
+                            when (store.type.uppercase()) {
+                                "SUPERMARKET", "GROCERY" -> BitmapDescriptorFactory.HUE_GREEN
+                                "RESTAURANT" -> BitmapDescriptorFactory.HUE_ORANGE
+                                "BAKERY" -> BitmapDescriptorFactory.HUE_YELLOW
+                                "CAFE" -> BitmapDescriptorFactory.HUE_CYAN
+                                "DELI" -> BitmapDescriptorFactory.HUE_VIOLET
+                                else -> BitmapDescriptorFactory.HUE_RED
+                            }
+                        ),
+                        onClick = {
+                            selectedStore = store
+                            isBottomSheetExpanded = true
+                            false
+                        }
+                    )
+                }
+                
+                // Draw route from selected store to current location
+                selectedStore?.let { store ->
+                    Polyline(
+                        points = listOf(
+                            store.location,
+                            LatLng(
+                                (store.location.latitude + currentLocation.latitude) / 2,
+                                (store.location.longitude + currentLocation.longitude) / 2
+                            ),
+                            currentLocation
+                        ),
+                        color = Color(0xFF2BAE66),
+                        width = 10f
+                    )
+                }
+            }
         }
         
         // Fallback UI if map fails to load
         if (mapLoadError) {
             FallbackMapView(
-                stores = vancouverStores,
+                stores = stores,
+                isLoading = isLoading,
                 onStoreClick = { store ->
                     selectedStore = store
                     isBottomSheetExpanded = true
-                }
+                },
+                onRefresh = { viewModel.refreshStores() }
             )
+        }
+        
+        // Loading indicator
+        if (isLoading && !mapLoadError) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Finding nearby stores...",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
         }
         
         // Gradient overlay at top
@@ -229,7 +281,9 @@ fun SafeGoogleMapScreen(
         
         // Top Bar
         MapTopBar(
+            storeCount = stores.size,
             onBackClick = onBackClick,
+            onRefresh = { viewModel.clearAndReload() },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp)
@@ -248,10 +302,15 @@ fun SafeGoogleMapScreen(
                     if (!locationPermissionState.status.isGranted) {
                         locationPermissionState.launchPermissionRequest()
                     } else {
+                        // Reload user location and search for stores there
+                        viewModel.loadUserLocation()
                         coroutineScope.launch {
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(currentLocation, 15f)
-                            )
+                            delay(500) // Give time for location to update
+                            userLocation?.let { location ->
+                                cameraPositionState.animate(
+                                    CameraUpdateFactory.newLatLngZoom(location, 14f)
+                                )
+                            }
                         }
                     }
                 },
@@ -302,7 +361,56 @@ fun SafeGoogleMapScreen(
             }
         }
         
-        // Bottom Sheet with Store/Delivery Info
+        // "Search this area" button - shown when user pans/zooms the map
+        AnimatedVisibility(
+            visible = showSearchThisArea && !isLoading,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 120.dp),
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut() + slideOutVertically()
+        ) {
+            Button(
+                onClick = {
+                    val projection = cameraPositionState.projection
+                    val bounds = projection?.visibleRegion?.latLngBounds
+                    if (bounds != null) {
+                        val center = cameraPositionState.position.target
+                        val visibleRadius = viewModel.calculateVisibleRadius(bounds)
+                        viewModel.searchInVisibleArea(center, visibleRadius)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = RoundedCornerShape(24.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Search this area",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
+        // Bottom Sheet with Store Info
+        // Snackbar for errors
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 220.dp)
+        )
+        
+        // Bottom Sheet with Store Info
         StoreBottomSheet(
             store = selectedStore,
             isExpanded = isBottomSheetExpanded,
@@ -311,8 +419,9 @@ fun SafeGoogleMapScreen(
                 selectedStore = null
                 isBottomSheetExpanded = false
             },
-            onCallDriver = onCallDriver,
-            onMessageDriver = onMessageDriver,
+            onShopNow = { store ->
+                onStoreClick(store.id)
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -320,7 +429,9 @@ fun SafeGoogleMapScreen(
 
 @Composable
 private fun MapTopBar(
+    storeCount: Int,
     onBackClick: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -346,28 +457,52 @@ private fun MapTopBar(
             }
         }
         
-        Text(
-            text = "Store Locations",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = "Nearby Stores",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
+            if (storeCount > 0) {
+                Text(
+                    text = "$storeCount stores found",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            }
+        }
         
-        Spacer(modifier = Modifier.width(48.dp))
+        Surface(
+            onClick = onRefresh,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+            modifier = Modifier.size(48.dp),
+            shadowElevation = 4.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = "Refresh",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StoreBottomSheet(
-    store: StoreLocation?,
+    store: MapStore?,
     isExpanded: Boolean,
     onExpandToggle: () -> Unit,
     onClose: () -> Unit,
-    onCallDriver: () -> Unit,
-    onMessageDriver: () -> Unit,
+    onShopNow: (MapStore) -> Unit,
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
@@ -415,7 +550,9 @@ private fun StoreBottomSheet(
                             Text(
                                 text = store.name,
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = store.type,
@@ -425,7 +562,9 @@ private fun StoreBottomSheet(
                             Text(
                                 text = store.address,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         
@@ -452,7 +591,7 @@ private fun StoreBottomSheet(
                         )
                         StoreStatCard(
                             icon = Icons.Outlined.DirectionsCar,
-                            value = store.distance,
+                            value = store.distance.ifEmpty { "Nearby" },
                             label = "Distance",
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -474,7 +613,7 @@ private fun StoreBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
-                            onClick = { /* Navigate to store */ },
+                            onClick = { onShopNow(store) },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
@@ -538,7 +677,8 @@ private fun StoreStatCard(
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            maxLines = 1
         )
         Text(
             text = label,
@@ -550,8 +690,10 @@ private fun StoreStatCard(
 
 @Composable
 private fun FallbackMapView(
-    stores: List<StoreLocation>,
-    onStoreClick: (StoreLocation) -> Unit
+    stores: List<MapStore>,
+    isLoading: Boolean,
+    onStoreClick: (MapStore) -> Unit,
+    onRefresh: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -560,85 +702,145 @@ private fun FallbackMapView(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Nearby Stores",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 60.dp, bottom = 8.dp)
-        )
-        
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 60.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(stores) { store ->
-                Card(
-                    onClick = { onStoreClick(store) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+            Text(
+                text = "Nearby Stores",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = "Refresh"
+                )
+            }
+        }
+        
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (stores.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = EcoColors.Green100,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Store,
-                                    contentDescription = null,
-                                    tint = EcoColors.Green500,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = store.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = store.address,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Star,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFFC107),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "${store.rating}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Text(
-                                    text = "• ${store.distance}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        
-                        Icon(
-                            imageVector = Icons.Filled.ArrowForwardIos,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
+                    Icon(
+                        imageVector = Icons.Outlined.Store,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "No stores found nearby",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Try refreshing or expanding your search area",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Button(onClick = onRefresh) {
+                        Text("Refresh")
+                    }
+                }
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(stores) { store ->
+                    Card(
+                        onClick = { onStoreClick(store) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = EcoColors.Green100,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Store,
+                                        contentDescription = null,
+                                        tint = EcoColors.Green500,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = store.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = store.address,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFC107),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "${store.rating}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    if (store.distance.isNotEmpty()) {
+                                        Text(
+                                            text = "• ${store.distance}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            Icon(
+                                imageVector = Icons.Filled.ArrowForwardIos,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }

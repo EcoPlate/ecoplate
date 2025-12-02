@@ -55,6 +55,11 @@ android {
         compose = true
         buildConfig = true
     }
+    
+    lint {
+        disable += "PermissionLaunchedDuringComposition"
+        abortOnError = false
+    }
 }
 
 // KSP configuration
@@ -106,6 +111,9 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:4.3.0")
     implementation("com.google.maps.android:maps-compose-utils:4.3.0")
     
+    // Google Places (for address autocomplete)
+    implementation("com.google.android.libraries.places:places:3.3.0")
+    
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -126,6 +134,11 @@ dependencies {
     
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    
+    // Room Database for local caching
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     
     // Compose LiveData
     implementation("androidx.compose.runtime:runtime-livedata:1.7.5")

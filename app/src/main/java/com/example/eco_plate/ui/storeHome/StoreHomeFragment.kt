@@ -11,16 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.getValue
 
 @AndroidEntryPoint
 class StoreHomeFragment : Fragment(){
-    private val viewModel: StoreHomeViewModel by viewModels()
+    // Use activityViewModels to persist data across tab navigation
+    private val viewModel: StoreHomeViewModel by activityViewModels()
+    private var hasNavigatedAway = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,12 +41,25 @@ class StoreHomeFragment : Fragment(){
                             viewModel = viewModel,
                             onBackClick = {
                                 findNavController().navigateUp()
-                            }
+                            },
+                            onAddNewItem = {
+                                hasNavigatedAway = true
+                                findNavController().navigate(com.example.eco_plate.R.id.navigation_new_item)
+                            },
+                            showBackButton = false // This is the store owner's home screen
                         )
                     }
                 }
             }
         }
-
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Refresh when coming back from adding a new item
+        if (hasNavigatedAway) {
+            hasNavigatedAway = false
+            viewModel.refreshStore()
+        }
     }
 }

@@ -187,10 +187,18 @@ class AuthViewModel @Inject constructor(
         storeName: String,
         storeAddress: String,
         storePhone: String,
-        storeDescription: String? = null
+        storeDescription: String? = null,
+        storeCity: String? = null,
+        storeProvince: String? = null,
+        storePostalCode: String? = null,
+        storeLatitude: Double? = null,
+        storeLongitude: Double? = null
     ) {
         viewModelScope.launch {
+            android.util.Log.d("AuthViewModel", "Creating store owner account with coordinates: lat=$storeLatitude, lng=$storeLongitude")
+            
             // Create user account with STORE_OWNER role and store details
+            // The backend will automatically create the store during signup
             val request = SignUpRequest(
                 email = email,
                 password = password,
@@ -201,7 +209,12 @@ class AuthViewModel @Inject constructor(
                 storeName = storeName,
                 storeAddress = storeAddress,
                 storePhone = storePhone,
-                storeDescription = storeDescription
+                storeDescription = storeDescription,
+                storeCity = storeCity,
+                storeProvince = storeProvince,
+                storePostalCode = storePostalCode,
+                storeLatitude = storeLatitude,
+                storeLongitude = storeLongitude
             )
             
             authRepository.signUp(request)
@@ -209,32 +222,9 @@ class AuthViewModel @Inject constructor(
                     _authState.value = result
                     if (result is Resource.Success) {
                         _isLoggedIn.value = true
-                        
-                        // After successful user creation, create the store
-                        // Parse the address to extract components (simple parsing for now)
-                        val addressParts = storeAddress.split(",").map { it.trim() }
-                        val storeData = mutableMapOf<String, Any>(
-                            "name" to storeName,
-                            "type" to "RESTAURANT",
-                            "address" to storeAddress,
-                            "phone" to storePhone,
-                            "city" to (addressParts.getOrNull(1) ?: ""),
-                            "region" to (addressParts.getOrNull(2) ?: ""),
-                            "postalCode" to (addressParts.getOrNull(3) ?: ""),
-                            "country" to "Canada"
-                        )
-                        
-                        storeDescription?.let { storeData["description"] = it }
-                        
-                        // Create the store
-                        storeRepository.createStore(storeData)
-                            .onEach { storeResult ->
-                                // Store creation result can be handled here if needed
-                                if (storeResult is Resource.Success) {
-                                    // Store created successfully
-                                }
-                            }
-                            .launchIn(viewModelScope)
+                        android.util.Log.d("AuthViewModel", "Store owner signup successful - store created by backend with coordinates")
+                        // Note: The backend automatically creates the store during signup
+                        // No need to create it again here
                     }
                 }
                 .launchIn(viewModelScope)

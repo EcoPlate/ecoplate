@@ -21,6 +21,7 @@ class LocationViewModel @Inject constructor(
     
     val currentLocation: LiveData<Location?> = locationManager.currentLocation
     val locationPermissionGranted: LiveData<Boolean> = locationManager.locationPermissionGranted
+    val currentPostalCode: LiveData<String?> = locationManager.currentPostalCode
     
     private val _locationUpdateState = MutableLiveData<Resource<com.example.eco_plate.data.models.User>>()
     val locationUpdateState: LiveData<Resource<com.example.eco_plate.data.models.User>> = _locationUpdateState
@@ -56,12 +57,22 @@ class LocationViewModel @Inject constructor(
     
     private fun updateLocationInBackend(latitude: Double, longitude: Double) {
         viewModelScope.launch {
-            userRepository.updateLocation(latitude, longitude)
+            // Get postal code using Android's built-in Geocoder (no external API needed!)
+            val postalCode = locationManager.getPostalCodeFromCoordinates(latitude, longitude)
+            
+            userRepository.updateLocation(latitude, longitude, postalCode)
                 .onEach { result ->
                     _locationUpdateState.value = result
                 }
                 .launchIn(viewModelScope)
         }
+    }
+    
+    /**
+     * Get the current cached postal code from the last location update
+     */
+    fun getCachedPostalCode(): String? {
+        return locationManager.getCachedPostalCode()
     }
     
     fun stopLocationUpdates() {

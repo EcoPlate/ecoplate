@@ -36,8 +36,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import coil.compose.AsyncImage
 import com.example.eco_plate.ui.components.EcoColors
 import com.example.eco_plate.utils.Resource
-import com.example.eco_plate.data.repository.CartRepository
-import com.example.eco_plate.data.repository.CartItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -78,7 +76,6 @@ enum class SortOption {
 @Composable
 fun ModernSearchScreen(
     viewModel: SearchViewModel,
-    cartRepository: CartRepository = remember { CartRepository() },
     onBackClick: () -> Unit = {},
     onProductClick: (String) -> Unit = {},
     onStoreClick: (String) -> Unit = {},
@@ -94,7 +91,7 @@ fun ModernSearchScreen(
     
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val cartItemsCount by cartRepository.cartItemsCount.collectAsState()
+    val cartItemsCount by viewModel.cartItemsCount.collectAsState()
     
     val categories = remember {
         listOf("All", "VEGETABLES", "FRUITS", "DAIRY", "MEAT", "BAKERY", "SNACKS", "BEVERAGES", "FROZEN", "OTHER")
@@ -111,6 +108,7 @@ fun ModernSearchScreen(
     // Observe search results from ViewModel
     val itemSearchResults by viewModel.itemSearchResults.observeAsState()
     val nearbyStores by viewModel.nearbyStores.observeAsState()
+    val isSyncing by viewModel.isSyncing.observeAsState(false)
     
     // Convert API results to SearchProduct format
     val searchResults = remember(itemSearchResults) {
@@ -188,7 +186,7 @@ fun ModernSearchScreen(
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
                 onSearchSubmit = { 
-                    // Manual submit on Enter key
+                    // Manual submit on Enter key - force sync to search backend
                     searchTrigger = searchQuery
                     isSearching = true
                     hasSearched = true
@@ -201,7 +199,8 @@ fun ModernSearchScreen(
                             isClearance = if (filters.vegan) true else null,
                             storeType = null,
                             maxPrice = filters.maxPrice,
-                            minDiscount = filters.minDiscount?.toInt()
+                            minDiscount = filters.minDiscount?.toInt(),
+                            forceSync = searchQuery.isNotEmpty() // Force sync when user explicitly searches
                         )
                         isSearching = false
                     }
@@ -310,17 +309,15 @@ fun ModernSearchScreen(
                                     onClick = { onProductClick(searchResults[index].id) },
                                     onAddToCart = {
                                         val product = searchResults[index]
-                                        cartRepository.addToCart(
-                                            CartItem(
-                                                id = product.id,
-                                                name = product.name,
-                                                storeName = product.store,
-                                                price = product.price,
-                                                originalPrice = product.originalPrice,
-                                                quantity = 1,
-                                                imageUrl = product.imageUrl,
-                                                isEcoFriendly = product.isLocal || product.isOrganic
-                                            )
+                                        viewModel.addToCart(
+                                            id = product.id,
+                                            name = product.name,
+                                            storeName = product.store,
+                                            price = product.price,
+                                            originalPrice = product.originalPrice,
+                                            quantity = 1,
+                                            imageUrl = product.imageUrl,
+                                            isEcoFriendly = product.isLocal || product.isOrganic
                                         )
                                         coroutineScope.launch {
                                             snackbarHostState.showSnackbar(
@@ -335,24 +332,9 @@ fun ModernSearchScreen(
                     }
                 }
             } else {
-                // Search Results
-                if (isSearching) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                } else if (searchResults.isEmpty() && hasSearched && !isSearching) {
-                    // Only show "No results" if user has searched and we're not currently searching
-                    item {
-                        NoResultsFound(searchQuery)
-                    }
-                } else {
+                // Search Results - prioritize showing results if we have them
+                if (searchResults.isNotEmpty()) {
+                    // We have results - show them (even if still syncing in background)
                     item {
                         Row(
                             modifier = Modifier
@@ -403,17 +385,15 @@ fun ModernSearchScreen(
                                     product = product,
                                     onClick = { onProductClick(product.id) },
                                     onAddToCart = { 
-                                        cartRepository.addToCart(
-                                            CartItem(
-                                                id = product.id,
-                                                name = product.name,
-                                                storeName = product.store,
-                                                price = product.price,
-                                                originalPrice = product.originalPrice,
-                                                quantity = 1,
-                                                imageUrl = product.imageUrl,
-                                                isEcoFriendly = product.isLocal || product.isOrganic
-                                            )
+                                        viewModel.addToCart(
+                                            id = product.id,
+                                            name = product.name,
+                                            storeName = product.store,
+                                            price = product.price,
+                                            originalPrice = product.originalPrice,
+                                            quantity = 1,
+                                            imageUrl = product.imageUrl,
+                                            isEcoFriendly = product.isLocal || product.isOrganic
                                         )
                                         coroutineScope.launch {
                                             snackbarHostState.showSnackbar(
@@ -431,6 +411,35 @@ fun ModernSearchScreen(
                             }
                         }
                         Spacer(modifier = Modifier.height(12.dp))
+                    }
+                } else if (isSearching || isSyncing || itemSearchResults is Resource.Loading) {
+                    // No results yet, but still searching/syncing - show loading
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator()
+                                if (isSyncing) {
+                                    Text(
+                                        text = "Searching grocery stores for \"$searchQuery\"...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else if (hasSearched) {
+                    // No results and not searching - show empty state
+                    item {
+                        NoResultsFound(searchQuery)
                     }
                 }
             }
