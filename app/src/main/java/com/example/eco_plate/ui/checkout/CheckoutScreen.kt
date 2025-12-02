@@ -259,27 +259,53 @@ private fun CheckoutContent(
             }
         }
 
-        Surface(
+        // Fixed payment button at bottom
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Button(
-                onClick = onCheckout,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = EcoGreen600),
-                shape = RoundedCornerShape(12.dp),
-                enabled = paymentState !is PaymentState.Loading && paymentState !is PaymentState.Processing
+                    .navigationBarsPadding()
             ) {
-                Icon(Icons.Default.Lock, null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Pay $${String.format("%.2f", totalWithTip)} CAD",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                // Total summary
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Total", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                    Text(
+                        "$${String.format("%.2f", totalWithTip)} CAD",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = EcoGreen600
+                    )
+                }
+                
+                Button(
+                    onClick = onCheckout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EcoGreen600),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = paymentState !is PaymentState.Loading && paymentState !is PaymentState.Processing
+                ) {
+                    Icon(Icons.Default.Lock, null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Pay Now",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
