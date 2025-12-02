@@ -7,32 +7,32 @@ import kotlinx.parcelize.Parcelize
 data class Cart(
     val id: String,
     val userId: String?,
-    val subtotal: Double,
-    val discount: Double,
-    val tax: Double,
-    val total: Double,
-    val items: List<CartItem>
+    val subtotal: Double = 0.0,
+    val discount: Double = 0.0,
+    val tax: Double = 0.0,
+    val total: Double = 0.0,
+    val items: List<CartItem> = emptyList()
 ) : Parcelable
 
 @Parcelize
 data class CartItem(
-    val id: String,
-    val cartId: String,
-    val itemId: String,
-    val quantity: Int,
-    val price: Double,
-    val item: CartItemProduct?
+    val id: String = "",
+    val cartId: String = "",
+    val itemId: String = "",
+    val quantity: Int = 0,
+    val price: Double = 0.0,
+    val item: CartItemProduct? = null
 ) : Parcelable
 
 @Parcelize
 data class CartItemProduct(
-    val id: String,
-    val name: String,
-    val description: String?,
-    val images: List<String>,
-    val originalPrice: Double,
-    val currentPrice: Double,
-    val store: CartItemStore?
+    val id: String = "",
+    val name: String = "",
+    val description: String? = null,
+    val images: List<String>? = null,  // Made nullable
+    val originalPrice: Double = 0.0,
+    val currentPrice: Double = 0.0,
+    val store: CartItemStore? = null
 ) : Parcelable
 
 @Parcelize

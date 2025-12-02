@@ -230,7 +230,7 @@ class CartRepository @Inject constructor(
                 price = cartItem.price.toFloat(),
                 originalPrice = item.originalPrice.toFloat(),
                 quantity = cartItem.quantity,
-                imageUrl = item.images.firstOrNull(),
+                imageUrl = item.images?.firstOrNull(),  // Handle nullable images
                 isEcoFriendly = true,
                 expiryDate = null,
                 itemId = cartItem.itemId
