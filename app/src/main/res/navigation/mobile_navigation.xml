@@ -70,6 +70,6 @@
         android:id="@+id/navigation_store_detail"
         android:name="com.example.eco_plate.ui.store.StoreDetailFragment"
         android:label="Store" />
-
+    
         
 </navigation>
