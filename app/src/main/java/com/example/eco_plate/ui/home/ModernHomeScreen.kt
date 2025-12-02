@@ -1,6 +1,5 @@
 package com.example.eco_plate.ui.home
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -31,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.*
@@ -79,7 +78,7 @@ data class ProductItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernHomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = viewModel(),
     onNavigateToSearch: () -> Unit = {},
     onNavigateToStore: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
@@ -89,9 +88,7 @@ fun ModernHomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showChangeAddress by remember { mutableStateOf(false) }
     val deliveryAddress by viewModel.deliveryAddress.collectAsState()
-    val deliveryLabel by viewModel.deliveryLabel.collectAsState()
-    val hasLoadedAddress by viewModel.hasLoadedAddress.collectAsState()
-    
+
     val categories = remember {
         listOf(
             CategoryItem("1", "Fruits", "🍎", EcoColors.Red500),
@@ -116,20 +113,16 @@ fun ModernHomeScreen(
     val featuredItemsResource by viewModel.featuredItems.observeAsState()
     val locationManager = LocationManager(LocalContext.current)
     
-    // Load stores ONLY if no delivery address was loaded by ViewModel
-    // The ViewModel init already loads stores if there's a saved address
-    LaunchedEffect(hasLoadedAddress) {
-        if (hasLoadedAddress && viewModel.getCurrentDeliveryLocation() == null) {
-            // No saved address with coords - use device GPS as fallback
-            Log.d("ModernHomeScreen", "No delivery address coords, using device GPS")
+    // Load stores from backend when screen opens
+    LaunchedEffect(Unit) {
         locationManager.getLastKnownLocation { location ->
             if (location != null) {
                 viewModel.loadNearbyStores(location.latitude, location.longitude)
                 viewModel.searchItems(location.latitude, location.longitude)
             } else {
+                // Use default Vancouver location if no location available
                 viewModel.loadNearbyStores(49.2827, -123.1207)
                 viewModel.searchItems(49.2827, -123.1207)
-                }
             }
         }
     }
@@ -217,51 +210,29 @@ fun ModernHomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = when (deliveryLabel?.lowercase()) {
-                                "home" -> Icons.Filled.Home
-                                "work" -> Icons.Filled.Work
-                                else -> Icons.Filled.LocationOn
-                            },
+                            imageVector = Icons.Filled.LocationOn,
                             contentDescription = null,
-                            tint = if (deliveryAddress != null) EcoColors.Green600 else EcoColors.Orange500,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(Spacing.xs))
                         Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
                             Text(
-                                    text = if (deliveryAddress != null) {
-                                        "Deliver to ${deliveryLabel ?: ""}"
-                                    } else "No address set",
+                                text = "Deliver to",
                                 style = MaterialTheme.typography.labelMedium,
-                                    color = if (deliveryAddress != null) MaterialTheme.colorScheme.onSurfaceVariant else EcoColors.Orange500
-                                )
-                                if (deliveryAddress != null) {
-                                    Icon(
-                                        Icons.Filled.Star,
-                                        contentDescription = "Default",
-                                        tint = EcoColors.Orange500,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                }
-                            }
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Text(
-                                text = deliveryAddress ?: "Tap to add your address",
+                                //text = "123 Main Street, Vancouver",
+                                text = deliveryAddress,
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = if (deliveryAddress != null) MaterialTheme.colorScheme.onSurface else EcoColors.Orange500,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                fontWeight = FontWeight.Medium
                             )
                         }
-                        IconButton(onClick = { showChangeAddress = true }) {
+                        IconButton(onClick = {showChangeAddress= true}) {
                             Icon(
-                                imageVector = if (deliveryAddress != null) Icons.Filled.KeyboardArrowDown else Icons.Filled.Add,
-                                contentDescription = if (deliveryAddress != null) "Change address" else "Add address",
-                                tint = if (deliveryAddress != null) MaterialTheme.colorScheme.onSurface else EcoColors.Orange500
+                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                contentDescription = "Change address"
                             )
                         }
                     }
@@ -424,12 +395,9 @@ fun ModernHomeScreen(
     if (showChangeAddress) {
         ChangeAddressScreen(
             onNavigateBack = { showChangeAddress = false },
-            onAddressConfirmed = { newAddress, latitude, longitude, label ->
-                if (latitude != null && longitude != null) {
-                    viewModel.updateDeliveryLocation(newAddress, latitude, longitude, label)
-                } else {
-                    viewModel.updateDeliveryAddress(newAddress)
-                }
+            onAddressConfirmed = { newAddress ->
+                //deliveryAddress = newAddress
+                viewModel.updateDeliveryAddress(newAddress)
                 showChangeAddress = false
             }
         )

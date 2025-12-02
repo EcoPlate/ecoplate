@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChangeAddressScreen(
     onNavigateBack: () -> Unit,
-    onAddressConfirmed: (address: String, latitude: Double?, longitude: Double?, label: String?) -> Unit,
+    onAddressConfirmed: (String) -> Unit,
     viewModel: AddressViewModel = hiltViewModel()
 ) {
     val addresses by viewModel.addresses.collectAsState()
@@ -310,7 +310,7 @@ fun ChangeAddressScreen(
                                 addresses = (addresses as? Resource.Success)?.data ?: emptyList(),
                                 onChipClick = { address ->
                                     viewModel.selectAddress(address)
-                                    onAddressConfirmed(address.shortAddress, address.latitude, address.longitude, address.label)
+                                    onAddressConfirmed(address.fullAddress)
                                 }
                             )
                         }
@@ -368,7 +368,7 @@ fun ChangeAddressScreen(
                                             address = address,
                                             onClick = {
                                                 viewModel.selectAddress(address)
-                                                onAddressConfirmed(address.shortAddress, address.latitude, address.longitude, address.label)
+                                                onAddressConfirmed(address.fullAddress)
                                             },
                                             onDelete = {
                                                 viewModel.deleteAddress(address)
@@ -665,17 +665,6 @@ private fun SavedAddressItem(
                 )
             }
             
-            // Quick star button to set as default
-            IconButton(
-                onClick = { if (!address.isDefault) onSetDefault() }
-            ) {
-                Icon(
-                    imageVector = if (address.isDefault) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = if (address.isDefault) "Default address" else "Set as default",
-                    tint = if (address.isDefault) EcoColors.Orange500 else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
             Box {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
@@ -692,7 +681,7 @@ private fun SavedAddressItem(
                     if (!address.isDefault) {
                         DropdownMenuItem(
                             text = { Text("Set as default") },
-                            leadingIcon = { Icon(Icons.Filled.Star, null, tint = EcoColors.Orange500) },
+                            leadingIcon = { Icon(Icons.Filled.Star, null, tint = EcoColors.Green600) },
                             onClick = {
                                 showMenu = false
                                 onSetDefault()

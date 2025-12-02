@@ -38,8 +38,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun SafeGoogleMapScreen(
     viewModel: MapViewModel = hiltViewModel(),
-    deliveryLatitude: Double? = null,
-    deliveryLongitude: Double? = null,
     onBackClick: () -> Unit = {},
     onStoreClick: (String) -> Unit = {},
     onCallDriver: () -> Unit = {},
@@ -57,23 +55,19 @@ fun SafeGoogleMapScreen(
     val storesResource by viewModel.stores.observeAsState()
     val isLocationLoading by viewModel.isLocationLoading.observeAsState(true)
     val locationError by viewModel.locationError.observeAsState()
-    val deliveryAddressLocation by viewModel.deliveryAddressLocation.observeAsState()
-    val deliveryAddressLabel by viewModel.deliveryAddressLabel.observeAsState()
     
     // Permission state
     val locationPermissionState = rememberPermissionState(
         permission = Manifest.permission.ACCESS_FINE_LOCATION
     )
     
-    // Load map for delivery address or GPS on launch
-    LaunchedEffect(Unit) {
-        viewModel.loadForDeliveryAddress(deliveryLatitude, deliveryLongitude)
-    }
-    
-    // Request permission if not granted
+    // Request permission on launch if not granted
     LaunchedEffect(locationPermissionState.status.isGranted) {
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
+        } else {
+            // Permission granted, refresh location
+            viewModel.loadUserLocation()
         }
     }
     
@@ -179,29 +173,13 @@ fun SafeGoogleMapScreen(
                     }
                 }
             ) {
-                // Current location marker (GPS)
+                // Current location marker
                 Marker(
                     state = MarkerState(position = currentLocation),
                     title = "Your Location",
                     snippet = "You are here",
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
                 )
-                
-                // Delivery address marker (if different from current location)
-                deliveryAddressLocation?.let { deliveryLocation ->
-                    // Only show if it's different from current GPS location
-                    val latDiff = deliveryLocation.latitude - currentLocation.latitude
-                    val lngDiff = deliveryLocation.longitude - currentLocation.longitude
-                    val distance = kotlin.math.sqrt(latDiff * latDiff + lngDiff * lngDiff)
-                    if (distance > 0.001) { // More than ~100m apart
-                        Marker(
-                            state = MarkerState(position = deliveryLocation),
-                            title = deliveryAddressLabel ?: "Delivery Address",
-                            snippet = "Your delivery location",
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)
-                        )
-                    }
-                }
                 
                 // Store markers from API
                 stores.forEach { store ->

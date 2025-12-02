@@ -9,7 +9,6 @@ import com.example.eco_plate.data.models.Item
 import com.example.eco_plate.data.models.SearchItemsResponse
 import com.example.eco_plate.data.models.SearchStoresResponse
 import com.example.eco_plate.data.models.Store
-import com.example.eco_plate.data.repository.CartItem
 import com.example.eco_plate.data.repository.CartRepository
 import com.example.eco_plate.data.repository.SearchRepository
 import com.example.eco_plate.ui.location.LocationManager
