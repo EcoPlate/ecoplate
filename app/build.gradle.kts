@@ -183,6 +183,6 @@ dependencies {
     //Maps Addresses
     implementation("com.google.android.libraries.places:places:3.5.0")
 
-    // Stripe SDK for payments
-    implementation("com.stripe:stripe-android:20.35.0")
+    // Stripe SDK for payments (using stable version compatible with Compose BOM)
+    implementation("com.stripe:stripe-android:20.25.0")
 }
