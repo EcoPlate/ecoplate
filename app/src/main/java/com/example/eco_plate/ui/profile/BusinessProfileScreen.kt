@@ -1,7 +1,9 @@
 package com.example.eco_plate.ui.profile
 
+import android.Manifest
 import android.graphics.Bitmap
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Eco
@@ -42,7 +43,6 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Water
@@ -51,7 +51,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -76,6 +75,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,8 +83,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.EcoColors
-import com.example.eco_plate.ui.profile.EcoImpactSection
-import com.example.eco_plate.ui.profile.StatsSection
 
 data class BusinessProfile(
     val name: String,
@@ -122,7 +120,24 @@ fun BusinessProfileScreen(
     var showHelpAndSupportDialog by remember { mutableStateOf(false) }
     var showPaymentMethodsDialog by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
 
+    val takePicture = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            viewModel.updateBusinessImage(bitmap)
+        }
+    }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                takePicture.launch(null)
+            } else {
+                Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -132,13 +147,7 @@ fun BusinessProfileScreen(
         }
     }
 
-    val takePicture = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            viewModel.updateBusinessImage(bitmap)
-        }
-    }
+
 
 
     Scaffold(
@@ -338,10 +347,12 @@ fun BusinessProfileScreen(
             onChooseGallery = {
                 showImageOptionsDialog = false
                 // TODO: launch gallery picker here
+                imagePicker.launch("image/*")
             },
             onChooseCamera = {
                 showImageOptionsDialog = false
                 // TODO: launch camera intent here
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         )
     }
