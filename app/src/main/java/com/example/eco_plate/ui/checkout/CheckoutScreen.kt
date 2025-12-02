@@ -304,7 +304,7 @@ private fun CartItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = item.images.firstOrNull() ?: "",
+                model = item.images?.firstOrNull() ?: "",
                 contentDescription = item.name,
                 modifier = Modifier
                     .size(60.dp)
