@@ -1,5 +1,11 @@
 package com.example.eco_plate.ui.profile
 
+import android.Manifest
+import android.graphics.Bitmap
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +22,10 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Lock
@@ -37,7 +43,6 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Water
@@ -46,10 +51,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -70,11 +75,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.EcoColors
 
 data class BusinessProfile(
@@ -86,7 +93,7 @@ data class BusinessProfile(
     val totalOrders: Int,
     val co2Saved: Float,
     val businessName: String,
-    val businessImageUrl: String? = null
+    val businessImageUrl: String? = null,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,17 +104,51 @@ fun BusinessProfileScreen(
     onNavigateToAddresses: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignout: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
     val businessProfile by viewModel.businessProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    var showImageOptionsDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpAndSupportDialog by remember { mutableStateOf(false) }
+    var showPaymentMethodsDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    val takePicture = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            viewModel.updateBusinessImage(bitmap)
+        }
+    }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                takePicture.launch(null)
+            } else {
+                Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.updateBusinessImage(uri)
+        }
+    }
+
+
+
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
@@ -152,6 +193,7 @@ fun BusinessProfileScreen(
                             ratingText = "4.8 (32)",
                             etaText = "10–15 min",
                             deliveryText = "Free",
+                            onEditImage = { showImageOptionsDialog = true},
                             onEditEmail = { showEmailDialog = true },
                             onEditPassword = { showPasswordDialog = true }
                         )
@@ -173,16 +215,17 @@ fun BusinessProfileScreen(
                     // Settings Section
                     item {
                         SettingsSection(
-                            onNavigateToPayments = onNavigateToPayments,
+                            onNavigateToPayments = {showPaymentMethodsDialog = true},
                             onNavigateToNotifications = onNavigateToNotifications,
-                            onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToLanguage = { showLanguageDialog = true },
+                            onNavigateToPrivacy = onNavigateToPrivacy,
+                            onNavigateToSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignout = onBusinessSignout,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
 
-                    // Eco Impact Section
+                    //Eco Impact Section
                     item {
                         EcoImpactSection(profile)
                     }
@@ -297,16 +340,74 @@ fun BusinessProfileScreen(
             }
         )
     }
+
+    if (showImageOptionsDialog) {
+        EditImageChoiceDialog(
+            onDismiss = { showImageOptionsDialog = false },
+            onChooseGallery = {
+                showImageOptionsDialog = false
+                // TODO: launch gallery picker here
+                imagePicker.launch("image/*")
+            },
+            onChooseCamera = {
+                showImageOptionsDialog = false
+                // TODO: launch camera intent here
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        )
+    }
+
+    val languageOptions = listOf(
+        LanguageOption("en", "English", R.drawable.outline_language_us_24)
+
+    )
+
+    if (showLanguageDialog) {
+        EditLanguageDialog(
+            options = languageOptions,
+            initialSelectionCode = "en",
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { code, name ->
+                showLanguageDialog = false
+            }
+        )
+    }
+
+    if (showHelpAndSupportDialog) {
+        HelpAndSupportDialog(
+            onDismiss = { showHelpAndSupportDialog = false }
+        )
+    }
+
+    val methodsTest = listOf(
+        PaymentMethod("1", "Visa •••• 4242", "Expires 08/27"),
+        PaymentMethod("2", "Mastercard •••• 1111", "Expires 01/26")
+    )
+
+    if (showPaymentMethodsDialog) {
+        PaymentMethodsDialog(
+            methodsTest,
+            { showPaymentMethodsDialog = false },
+            { showPaymentMethodsDialog = false },
+            {id, title ->
+                // handle selected payment method
+
+                showPaymentMethodsDialog = false
+            }
+        )
+    }
+
 }
 
 @Composable
 private fun ProfileHeader(
     profile: BusinessProfile,
     headerImageUrl: String? = null,
-    businessName: String = profile.businessName,
+    businessName: String = profile.name,
     ratingText: String? = null,
     etaText: String? = null,
     deliveryText: String? = null,
+    onEditImage: () -> Unit = {},
     onEditEmail: () -> Unit = {},
     onEditPassword: () -> Unit = {}
 ) {
@@ -349,6 +450,18 @@ private fun ProfileHeader(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
+
+                IconButton(
+                    onClick = onEditImage,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit header image"
                     )
                 }
 
@@ -424,49 +537,6 @@ private fun ProfileHeader(
                         }
                     }
                 }
-            }
-
-            Divider()
-
-
-            // Profile Picture
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(
-                        EcoColors.Green100
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = profile.name.split(" ").map { it.first() }.joinToString(""),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = EcoColors.Green600
-                )
-            }
-
-            // Name and Email
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = profile.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = profile.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = profile.memberSince,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             // Edit Profile Buttons
@@ -573,9 +643,10 @@ private fun QuickActionsSection(
 private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignout: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -608,13 +679,13 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Language,
                     title = "Language",
                     subtitle = "English",
-                    onClick = { }
+                    onClick = onNavigateToLanguage
                 )
                 HorizontalDivider()
                 SettingsItem(
                     icon = Icons.Outlined.Security,
                     title = "Privacy & Security",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -627,14 +698,6 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Info,
                     title = "About",
                     onClick = onNavigateToAbout
-                )
-                // Business Account Logout -- Switch to User Account
-                HorizontalDivider()
-                SettingsItem(
-                    icon = Icons.Outlined.Logout,
-                    title = "Switch to User Account",
-                    textColor = MaterialTheme.colorScheme.error,
-                    onClick = onBusinessSignout
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -752,7 +815,7 @@ private fun EcoImpactSection(profile: BusinessProfile) {
 //////////////////////////////////////////////////////////////////
 
 private val previewBusinessProfile = BusinessProfile(
-    name = "Daniel Coop",
+    name = "Business Name",
     email = "bakery@example.com",
     phone = "604-123-4567",
     memberSince = "Member since 2021",
@@ -812,7 +875,7 @@ private fun BusinessProfileScreenContent(
         }
         item { StatsSection(profile!!) }
         item { QuickActionsSection({}, {}) }
-        item { SettingsSection({}, {}, {}, {}, {}, {}) }
+        item { SettingsSection({}, {}, {}, {}, {},  {}, {}) }
         item { EcoImpactSection(profile!!) }
     }
 }

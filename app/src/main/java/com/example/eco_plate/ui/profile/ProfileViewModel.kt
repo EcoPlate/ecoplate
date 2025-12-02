@@ -1,7 +1,10 @@
 package com.example.eco_plate.ui.profile
 
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import com.example.eco_plate.data.repository.AuthRepository
 import com.example.eco_plate.data.repository.CartRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -90,7 +93,15 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
-    
+
+    fun updateBusinessImage(uri: Uri) {
+        // TODO
+    }
+
+    fun updateBusinessImage(bitmap: Bitmap) {
+        // TODO
+    }
+
     private fun updateProfileFromUser(user: com.example.eco_plate.data.models.User) {
         // Use real user data, ensuring we never pass null
         val firstName = user.firstName?.trim() ?: ""
@@ -112,6 +123,18 @@ class ProfileViewModel @Inject constructor(
             totalSaved = 245.50f,
             totalOrders = 47,
             co2Saved = 15.3f
+        )
+        _businessProfile.value = BusinessProfile(
+            name = displayName,
+            email = user.email,
+            phone = user.phone ?: "Not provided",
+            memberSince = formatMemberSince(user.createdAt),
+            // These would come from a stats API in a real app
+            totalSaved = 245.50f,
+            totalOrders = 47,
+            co2Saved = 15.3f,
+            businessName = "Your Store",
+            businessImageUrl = null
         )
     }
     

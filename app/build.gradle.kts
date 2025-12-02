@@ -171,4 +171,7 @@ dependencies {
     //Text Scan
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
 
+    //Maps Addresses
+    implementation("com.google.android.libraries.places:places:3.5.0")
+
 }

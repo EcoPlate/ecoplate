@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import com.example.eco_plate.ui.components.EcoColors
 import androidx.compose.runtime.collectAsState
+import com.example.eco_plate.R
+import com.example.eco_plate.utils.Resource
 
 data class UserProfile(
     val name: String,
@@ -42,9 +44,9 @@ fun ModernProfileScreen(
     onNavigateToAddresses: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignup: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
@@ -53,7 +55,11 @@ fun ModernProfileScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
-    
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpAndSupportDialog by remember { mutableStateOf(false) }
+    var showPaymentMethodsDialog by remember { mutableStateOf(false) }
+
+
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         topBar = {
@@ -75,7 +81,8 @@ fun ModernProfileScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .padding(bottom = 100.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -113,11 +120,13 @@ fun ModernProfileScreen(
                     // Settings Section
                     item {
                         SettingsSection(
-                            onNavigateToPayments = onNavigateToPayments,
+                            onNavigateToPayments = { showPaymentMethodsDialog = true },
                             onNavigateToNotifications = onNavigateToNotifications,
+                            onNavigateToLanguage = { showLanguageDialog = true } ,
+                            onNavigateToPrivacy = onNavigateToPrivacy,
                             onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToHelpAndSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignup = onBusinessSignup,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
@@ -234,6 +243,46 @@ fun ModernProfileScreen(
                     }
                 }
                 showPasswordDialog = false
+            }
+        )
+    }
+
+    val languageOptions = listOf(
+        LanguageOption("en", "English", R.drawable.outline_language_us_24)
+
+    )
+
+    if (showLanguageDialog) {
+        EditLanguageDialog(
+            options = languageOptions,
+            initialSelectionCode = "en",
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { code, name ->
+                showLanguageDialog = false
+            }
+        )
+    }
+
+    if (showHelpAndSupportDialog) {
+        HelpAndSupportDialog(
+            onDismiss = { showHelpAndSupportDialog = false }
+        )
+    }
+
+    val methodsTest = listOf(
+        PaymentMethod("1", "Visa •••• 4242", "Expires 08/27"),
+        PaymentMethod("2", "Mastercard •••• 1111", "Expires 01/26")
+    )
+
+    if (showPaymentMethodsDialog) {
+        PaymentMethodsDialog(
+            methodsTest,
+            { showPaymentMethodsDialog = false },
+            { showPaymentMethodsDialog = false },
+            {id, title ->
+                // handle selected payment method
+
+                showPaymentMethodsDialog = false
             }
         )
     }
@@ -392,6 +441,7 @@ private fun QuickActionsSection(
                 title = "Order History",
                 subtitle = "View all orders",
                 onClick = onNavigateToOrders
+
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
@@ -408,9 +458,11 @@ private fun QuickActionsSection(
 private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
     onNavigateToSupport: () -> Unit,
+    onNavigateToHelpAndSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignup: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -443,31 +495,25 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Language,
                     title = "Language",
                     subtitle = "English",
-                    onClick = { }
+                    onClick = onNavigateToLanguage
                 )
                 HorizontalDivider()
                 SettingsItem(
                     icon = Icons.Outlined.Security,
                     title = "Privacy & Security",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
                 HorizontalDivider()
                 SettingsItem(
                     icon = Icons.Outlined.HelpOutline,
                     title = "Help & Support",
-                    onClick = onNavigateToSupport
+                    onClick = onNavigateToHelpAndSupport
                 )
                 HorizontalDivider()
                 SettingsItem(
                     icon = Icons.Outlined.Info,
                     title = "About",
                     onClick = onNavigateToAbout
-                )
-                HorizontalDivider()
-                SettingsItem(
-                    icon = Icons.Outlined.Store,
-                    title = "Become a Partner",
-                    onClick = onBusinessSignup
                 )
                 HorizontalDivider()
                 SettingsItem(

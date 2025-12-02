@@ -1,6 +1,7 @@
 package com.example.eco_plate.ui.profile
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,17 +13,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.net.toUri
 
 @AndroidEntryPoint
-class ProfileFragment : Fragment() {
+class BusinessProfileFragment : Fragment() {
 
     private val viewModel: ProfileViewModel by viewModels()
     private var hasInitiallyLoaded = false
@@ -52,12 +52,12 @@ class ProfileFragment : Fragment() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        ModernProfileScreen(
+                        BusinessProfileScreen(
                             viewModel = viewModel,
                             onNavigateToOrders = {
                                 // Navigate immediately without waiting for any async operations
                                 view?.post {
-                                    findNavController().navigate(R.id.navigation_orders)
+                                    findNavController().navigate(R.id.navigation_sales)
                                 }
                             },
                             onNavigateToAddresses = {
@@ -81,7 +81,6 @@ class ProfileFragment : Fragment() {
                                 // TODO: Navigate to support screen
                             },
                             onNavigateToAbout = {
-                                // TODO: currently opens demo website
                                 val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
                                 startActivity(intent)
                             },

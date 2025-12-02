@@ -251,6 +251,7 @@ fun SalesScreen (
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(bottom = 100.dp)
         ) {
             // Tab Row
             ScrollableTabRow(
@@ -302,7 +303,7 @@ private fun OrdersTopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Your Orders",
+                text = "Sales",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )

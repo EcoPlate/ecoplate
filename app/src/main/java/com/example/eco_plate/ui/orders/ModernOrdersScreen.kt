@@ -212,6 +212,7 @@ fun ModernOrdersScreen(
     LaunchedEffect(Unit) {
         viewModel.loadOrders()
     }
+
     val ordersState by viewModel.ordersState.collectAsState()
     
     Scaffold(
@@ -226,6 +227,7 @@ fun ModernOrdersScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(bottom = 100.dp)
         ) {
             // Tab Row
             ScrollableTabRow(

@@ -31,6 +31,36 @@ data class User(
     }
 }
 
+@Parcelize
+data class BusinessUser(
+    val id: String,
+    val email: String,
+    val businessName : String? = null,
+    val businessAddress: String? = null,
+    val businessImageUrl: String? = null,
+    val username: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val phone: String? = null,
+    @SerializedName("role")
+    val role: String? = "STORE_OWNER",  // Backend returns string, not enum
+    val isActive: Boolean = true,
+    val profilePicture: String? = null,
+    @SerializedName("createdAt")
+    val createdAt: String? = null,
+    @SerializedName("updatedAt")
+    val updatedAt: String? = null
+) : Parcelable {
+    // Helper function to get role as enum
+    fun getRoleAsEnum(): UserRole {
+        return try {
+            UserRole.valueOf(role?.uppercase() ?: "STORE_OWNER")
+        } catch (e: IllegalArgumentException) {
+            UserRole.STORE_OWNER
+        }
+    }
+}
+
 enum class UserRole {
     USER,
     STORE_OWNER,
