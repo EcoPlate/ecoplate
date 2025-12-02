@@ -71,6 +71,7 @@ data class Order(
 @Composable
 fun ModernOrdersScreen(
     viewModel: OrdersViewModel,
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToOrderDetail: (String) -> Unit = {},
     onNavigateToReorder: (String) -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
@@ -139,7 +140,10 @@ fun ModernOrdersScreen(
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         topBar = {
-            OrdersTopBar(onSupportClick = onNavigateToSupport)
+            OrdersTopBar(
+                onBackClick = onNavigateBack,
+                onSupportClick = onNavigateToSupport
+            )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp)
@@ -222,9 +226,21 @@ fun ModernOrdersScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OrdersTopBar(
+    onBackClick: (() -> Unit)? = null,
     onSupportClick: () -> Unit
 ) {
     TopAppBar(
+        navigationIcon = {
+            if (onBackClick != null) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        },
         title = {
             Text(
                 text = "Your Orders",

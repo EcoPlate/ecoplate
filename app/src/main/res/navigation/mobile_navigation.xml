@@ -80,5 +80,10 @@
         android:id="@+id/navigation_order_success"
         android:name="com.example.eco_plate.ui.checkout.OrderSuccessFragment"
         android:label="Order Success" />
+
+    <fragment
+        android:id="@+id/navigation_addresses"
+        android:name="com.example.eco_plate.ui.home.AddressesFragment"
+        android:label="Manage Addresses" />
         
 </navigation>

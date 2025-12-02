@@ -39,4 +39,9 @@
         android:id="@+id/navigation_order_details"
         android:name="com.example.eco_plate.ui.orders.OrderDetailsFragment"
         android:label="Order Details" />
+
+    <fragment
+        android:id="@+id/navigation_addresses"
+        android:name="com.example.eco_plate.ui.home.AddressesFragment"
+        android:label="Manage Addresses" />
 </navigation>

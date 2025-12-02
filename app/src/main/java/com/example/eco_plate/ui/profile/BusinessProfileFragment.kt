@@ -61,7 +61,10 @@ class BusinessProfileFragment : Fragment() {
                                 }
                             },
                             onNavigateToAddresses = {
-                                // TODO: Navigate to addresses screen
+                                // Navigate to store home for now - addresses
+                                view?.post {
+                                    findNavController().navigate(R.id.navigation_store_home)
+                                }
                             },
                             onNavigateToPayments = {
                                 // TODO: Navigate to payments screen

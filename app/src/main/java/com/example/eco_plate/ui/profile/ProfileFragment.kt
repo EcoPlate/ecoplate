@@ -61,7 +61,10 @@ class ProfileFragment : Fragment() {
                                 }
                             },
                             onNavigateToAddresses = {
-                                // TODO: Navigate to addresses screen
+                                // Navigate to home for now - addresses screen
+                                view?.post {
+                                    findNavController().navigate(R.id.navigation_home)
+                                }
                             },
                             onNavigateToPayments = {
                                 // TODO: Navigate to payments screen

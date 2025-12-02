@@ -30,8 +30,17 @@ data class MapStore(
     val type: String,
     val rating: Float = 4.5f,
     val distance: String = "",
-    val distanceKm: Double = 0.0
+    val distanceKm: Double = 0.0,
+    val phone: String? = null,
+    val itemCount: Int = 0,
+    val isOpen: Boolean = true
 )
+
+sealed class MapState {
+    object Loading : MapState()
+    data class Success(val stores: List<MapStore>, val message: String? = null) : MapState()
+    data class Error(val message: String, val canRetry: Boolean = true) : MapState()
+}
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -44,6 +53,9 @@ class MapViewModel @Inject constructor(
 
     private val _stores = MutableLiveData<Resource<List<MapStore>>>()
     val stores: LiveData<Resource<List<MapStore>>> = _stores
+    
+    private val _mapState = MutableLiveData<MapState>(MapState.Loading)
+    val mapState: LiveData<MapState> = _mapState
 
     private val _isLocationLoading = MutableLiveData(true)
     val isLocationLoading: LiveData<Boolean> = _isLocationLoading
@@ -55,6 +67,10 @@ class MapViewModel @Inject constructor(
     private val _showSearchThisArea = MutableLiveData(false)
     val showSearchThisArea: LiveData<Boolean> = _showSearchThisArea
     
+    // Selected store for navigation
+    private val _selectedStoreForNavigation = MutableLiveData<MapStore?>()
+    val selectedStoreForNavigation: LiveData<MapStore?> = _selectedStoreForNavigation
+    
     // Current search center and radius
     private var lastSearchCenter: LatLng? = null
     private var lastSearchRadius: Double = 25.0
@@ -62,12 +78,30 @@ class MapViewModel @Inject constructor(
     // All stores loaded (accumulate as user explores)
     private val allLoadedStores = mutableMapOf<String, MapStore>()
     
+    // Retry count for error handling
+    private var retryCount = 0
+    private val maxRetries = 3
+    
     private var cameraMovedJob: Job? = null
 
     init {
         // Start location updates first to improve chances of getting location
         locationManager.startLocationUpdates()
         loadUserLocation()
+    }
+    
+    /**
+     * Select a store for potential navigation
+     */
+    fun selectStoreForNavigation(store: MapStore) {
+        _selectedStoreForNavigation.value = store
+    }
+    
+    /**
+     * Clear store selection
+     */
+    fun clearStoreSelection() {
+        _selectedStoreForNavigation.value = null
     }
 
     fun loadUserLocation() {
@@ -155,6 +189,7 @@ class MapViewModel @Inject constructor(
     fun loadNearbyStores(latitude: Double, longitude: Double, radiusKm: Double = 25.0) {
         viewModelScope.launch {
             _stores.value = Resource.Loading()
+            _mapState.value = MapState.Loading
             
             // Update last search position
             lastSearchCenter = LatLng(latitude, longitude)
@@ -162,7 +197,7 @@ class MapViewModel @Inject constructor(
             
             val postalCode = locationManager.getPostalCodeFromCoordinates(latitude, longitude)
             
-            Log.d(TAG, "Loading stores at ($latitude, $longitude) with radius $radiusKm km")
+            Log.d(TAG, "Loading stores at ($latitude, $longitude) with radius $radiusKm km, postalCode: $postalCode")
             
             searchRepository.searchStores(
                 latitude = latitude,
@@ -173,20 +208,31 @@ class MapViewModel @Inject constructor(
             ).onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        val newStores = result.data?.data?.map { store ->
-                            MapStore(
-                                id = store.id,
-                                name = store.name,
-                                address = store.address ?: store.city ?: "Unknown",
-                                location = LatLng(
-                                    store.latitude ?: latitude,
-                                    store.longitude ?: longitude
-                                ),
-                                type = store.type ?: "Grocery",
-                                rating = store.rating?.toFloat() ?: 4.5f,
-                                distance = store.distanceFormatted ?: formatDistance(store.distanceKm),
-                                distanceKm = store.distanceKm ?: 0.0
-                            )
+                        val newStores = result.data?.data?.mapNotNull { store ->
+                            // Only include stores with valid coordinates
+                            val storeLat = store.latitude
+                            val storeLng = store.longitude
+                            
+                            // Skip stores without coordinates or use store location if available
+                            if (storeLat != null && storeLng != null && 
+                                isValidCoordinate(storeLat, storeLng)) {
+                                MapStore(
+                                    id = store.id,
+                                    name = store.name,
+                                    address = buildStoreAddress(store),
+                                    location = LatLng(storeLat, storeLng),
+                                    type = store.type ?: store.category?.name ?: "Grocery",
+                                    rating = store.rating?.toFloat() ?: 4.5f,
+                                    distance = store.distanceFormatted ?: formatDistance(store.distanceKm),
+                                    distanceKm = store.distanceKm ?: 0.0,
+                                    phone = store.phone,
+                                    itemCount = store.itemCount ?: 0,
+                                    isOpen = store.isActive ?: true
+                                )
+                            } else {
+                                Log.w(TAG, "Skipping store ${store.name} - invalid/missing coordinates: lat=$storeLat, lng=$storeLng")
+                                null
+                            }
                         } ?: emptyList()
                         
                         // Add new stores to our accumulated map
@@ -194,30 +240,85 @@ class MapViewModel @Inject constructor(
                             allLoadedStores[store.id] = store
                         }
                         
-                        Log.d(TAG, "Loaded ${newStores.size} new stores, total accumulated: ${allLoadedStores.size}")
+                        Log.d(TAG, "Loaded ${newStores.size} new stores with valid coordinates, total accumulated: ${allLoadedStores.size}")
+                        
+                        // Sort stores by distance
+                        val sortedStores = allLoadedStores.values.toList().sortedBy { it.distanceKm }
                         
                         // Return all accumulated stores
-                        _stores.value = Resource.Success(allLoadedStores.values.toList())
+                        _stores.value = Resource.Success(sortedStores)
+                        _mapState.value = if (sortedStores.isEmpty()) {
+                            MapState.Success(emptyList(), "No stores found in this area. Try expanding your search radius.")
+                        } else {
+                            MapState.Success(sortedStores, "${sortedStores.size} stores found nearby")
+                        }
                         _showSearchThisArea.value = false
+                        retryCount = 0 // Reset retry count on success
                     }
                     is Resource.Error -> {
+                        Log.e(TAG, "Error loading stores: ${result.message}")
                         // On error, still show previously loaded stores if we have them
                         if (allLoadedStores.isNotEmpty()) {
-                            _stores.value = Resource.Success(allLoadedStores.values.toList())
+                            val sortedStores = allLoadedStores.values.toList().sortedBy { it.distanceKm }
+                            _stores.value = Resource.Success(sortedStores)
+                            _mapState.value = MapState.Success(sortedStores, "Showing cached stores. Network error: ${result.message}")
                         } else {
                             _stores.value = Resource.Error(result.message ?: "Failed to load stores")
+                            _mapState.value = MapState.Error(
+                                result.message ?: "Failed to load nearby stores",
+                                canRetry = retryCount < maxRetries
+                            )
                         }
                     }
                     is Resource.Loading -> {
                         // Keep showing existing stores while loading new ones
                         if (allLoadedStores.isNotEmpty()) {
-                            _stores.value = Resource.Success(allLoadedStores.values.toList())
+                            val sortedStores = allLoadedStores.values.toList().sortedBy { it.distanceKm }
+                            _stores.value = Resource.Success(sortedStores)
                         } else {
                             _stores.value = Resource.Loading()
                         }
                     }
                 }
             }.launchIn(viewModelScope)
+        }
+    }
+    
+    /**
+     * Build a complete store address from available fields
+     */
+    private fun buildStoreAddress(store: Store): String {
+        val parts = listOfNotNull(
+            store.address,
+            store.city,
+            store.state ?: store.region,
+            store.postalCode ?: store.zipCode
+        ).filter { it.isNotBlank() }
+        
+        return if (parts.isNotEmpty()) {
+            parts.joinToString(", ")
+        } else {
+            "Address not available"
+        }
+    }
+    
+    /**
+     * Check if coordinates are valid
+     */
+    private fun isValidCoordinate(lat: Double, lng: Double): Boolean {
+        return lat in -90.0..90.0 && lng in -180.0..180.0 &&
+               !(lat == 0.0 && lng == 0.0) // Exclude (0,0) as it's usually invalid
+    }
+    
+    /**
+     * Retry loading stores after an error
+     */
+    fun retryLoadingStores() {
+        retryCount++
+        lastSearchCenter?.let { center ->
+            loadNearbyStores(center.latitude, center.longitude, lastSearchRadius)
+        } ?: run {
+            loadUserLocation()
         }
     }
     

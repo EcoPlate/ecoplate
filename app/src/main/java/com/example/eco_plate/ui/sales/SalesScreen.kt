@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.HelpOutline
@@ -103,6 +104,7 @@ data class Order(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SalesScreen (
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToOrderDetail: (String) -> Unit = {},
     //onNavigateToReorder: (String) -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
@@ -242,7 +244,10 @@ fun SalesScreen (
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         topBar = {
-            OrdersTopBar(onSupportClick = onNavigateToSupport)
+            OrdersTopBar(
+                onBackClick = onNavigateBack,
+                onSupportClick = onNavigateToSupport
+            )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp)
@@ -298,9 +303,21 @@ fun SalesScreen (
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OrdersTopBar(
+    onBackClick: (() -> Unit)? = null,
     onSupportClick: () -> Unit
 ) {
     TopAppBar(
+        navigationIcon = {
+            if (onBackClick != null) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        },
         title = {
             Text(
                 text = "Sales",

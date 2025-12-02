@@ -97,14 +97,6 @@ fun ModernSearchScreen(
         listOf("All", "VEGETABLES", "FRUITS", "DAIRY", "MEAT", "BAKERY", "SNACKS", "BEVERAGES", "FROZEN", "OTHER")
     }
     
-    val recentSearches = remember {
-        listOf("Organic Avocados", "Whole Wheat Bread", "Almond Milk", "Fresh Strawberries")
-    }
-    
-    val trendingSearches = remember {
-        listOf("Zero Waste", "Plant-Based", "Local Produce", "Gluten Free", "Vegan Options")
-    }
-    
     // Observe search results from ViewModel
     val itemSearchResults by viewModel.itemSearchResults.observeAsState()
     val nearbyStores by viewModel.nearbyStores.observeAsState()
@@ -245,36 +237,8 @@ fun ModernSearchScreen(
                 }
             }
             
-            // Recent/Trending Searches (show when no search)
+            // Popular Products (show when no search)
             if (searchQuery.isEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Recent Searches
-                        if (recentSearches.isNotEmpty()) {
-                            SearchSuggestionSection(
-                                title = "Recent Searches",
-                                icon = Icons.Outlined.History,
-                                suggestions = recentSearches,
-                                onSuggestionClick = { searchQuery = it }
-                            )
-                        }
-                        
-                        // Trending Searches
-                        SearchSuggestionSection(
-                            title = "Trending Now",
-                            icon = Icons.Outlined.TrendingUp,
-                            suggestions = trendingSearches,
-                            onSuggestionClick = { searchQuery = it },
-                            chipColors = ChipColors.trending
-                        )
-                    }
-                }
-                
                 // Popular Products Section Header
                 item {
                     Row(
@@ -545,62 +509,6 @@ private fun CategoryChip(
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
         )
     )
-}
-
-@Composable
-private fun SearchSuggestionSection(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    suggestions: List<String>,
-    onSuggestionClick: (String) -> Unit,
-    chipColors: ChipColors = ChipColors.default
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        
-        // Use LazyRow for horizontal scrolling of chips
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(suggestions.size) { index ->
-                SuggestionChip(
-                    onClick = { onSuggestionClick(suggestions[index]) },
-                    label = { 
-                        Text(
-                            suggestions[index], 
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1
-                        ) 
-                    },
-                    colors = if (chipColors == ChipColors.trending) {
-                        SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = EcoColors.Green100,
-                            labelColor = EcoColors.Green600
-                        )
-                    } else {
-                        SuggestionChipDefaults.suggestionChipColors()
-                    }
-                )
-            }
-        }
-    }
 }
 
 @Composable
@@ -1117,10 +1025,6 @@ private fun FilterBottomSheet(
             }
         }
     }
-}
-
-private enum class ChipColors {
-    default, trending
 }
 
 // Helper functions - API data is now used instead of sample products

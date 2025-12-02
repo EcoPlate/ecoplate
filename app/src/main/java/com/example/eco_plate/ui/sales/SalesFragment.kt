@@ -37,6 +37,9 @@ class SalesFragment: Fragment() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         SalesScreen(
+                            onNavigateBack = {
+                                findNavController().popBackStack()
+                            },
                             onNavigateToOrderDetail = { orderId ->
                                 // Navigate to order detail with map
                                 val bundle = Bundle().apply {
