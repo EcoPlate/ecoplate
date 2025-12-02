@@ -120,6 +120,7 @@ fun BusinessProfileScreen(
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showHelpAndSupportDialog by remember { mutableStateOf(false) }
+    var showPaymentMethodsDialog by remember { mutableStateOf(false) }
 
 
 
@@ -205,7 +206,7 @@ fun BusinessProfileScreen(
                     // Settings Section
                     item {
                         SettingsSection(
-                            onNavigateToPayments = onNavigateToPayments,
+                            onNavigateToPayments = {showPaymentMethodsDialog = true},
                             onNavigateToNotifications = onNavigateToNotifications,
                             onNavigateToLanguage = { showLanguageDialog = true },
                             onNavigateToPrivacy = onNavigateToPrivacy,
@@ -364,6 +365,24 @@ fun BusinessProfileScreen(
     if (showHelpAndSupportDialog) {
         HelpAndSupportDialog(
             onDismiss = { showHelpAndSupportDialog = false }
+        )
+    }
+
+    val methodsTest = listOf(
+        PaymentMethod("1", "Visa •••• 4242", "Expires 08/27"),
+        PaymentMethod("2", "Mastercard •••• 1111", "Expires 01/26")
+    )
+
+    if (showPaymentMethodsDialog) {
+        PaymentMethodsDialog(
+            methodsTest,
+            { showPaymentMethodsDialog = false },
+            { showPaymentMethodsDialog = false },
+            {id, title ->
+                // handle selected payment method
+
+                showPaymentMethodsDialog = false
+            }
         )
     }
 

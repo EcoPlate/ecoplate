@@ -1,5 +1,6 @@
 package com.example.eco_plate.ui.profile
 
+import android.util.Patterns
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -7,15 +8,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ContactSupport
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.ContactSupport
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -338,7 +344,7 @@ fun EditEmailDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    if (email.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                         onConfirm(email)
                     } else {
                         isError = true
@@ -649,6 +655,117 @@ fun HelpAndSupportDialog(
             }
         },
         confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+data class PaymentMethod(
+    val id: String,
+    val title: String,   // e.g. "Visa •••• 4242"
+    val subtitle: String // e.g. "Expires 08/27"
+)
+
+@Composable
+private fun PaymentMethodRow(
+    method: PaymentMethod,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(method.title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                method.subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        RadioButton(
+            selected = selected,
+            onClick = onClick
+        )
+    }
+}
+
+@Composable
+fun PaymentMethodsDialog(
+    methods: List<PaymentMethod>,
+    onAddNewPaymentMethod: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var selectedId by remember {
+        mutableStateOf(methods.firstOrNull()?.id ?: "")
+    }
+
+    val selectedMethod = methods.firstOrNull { it.id == selectedId }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.CreditCard,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = { Text("Select Payment Method") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onAddNewPaymentMethod)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add New Payment Method")
+                }
+
+                Divider()
+
+                // Existing methods
+                methods.forEach { method ->
+                    PaymentMethodRow(
+                        method = method,
+                        selected = method.id == selectedId,
+                        onClick = { selectedId = method.id }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = selectedMethod != null,
+                onClick = {
+                    selectedMethod?.let {
+                        onConfirm(it.id, it.title)
+                    }
+                }
+            ) {
+                Text("Confirm")
+            }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
