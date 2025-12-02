@@ -1,6 +1,8 @@
 package com.example.eco_plate.ui.profile
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -69,16 +72,17 @@ class ProfileFragment : Fragment() {
                                     findNavController().navigate(R.id.navigation_notifications)
                                 }
                             },
+                            onNavigateToPrivacy = {
+                                // TODO: Modify Link to Vid 3
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
+                                startActivity(intent)
+                            },
                             onNavigateToSupport = {
                                 // TODO: Navigate to support screen
                             },
                             onNavigateToAbout = {
-                                // TODO: Navigate to about screen
-                            },
-
-                            onBusinessSignup = {
-                                val intent = android.content.Intent(requireContext(), com.example.eco_plate.ui.auth.BusinessSignupActivity::class.java)
-                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                // TODO: currently opens demo website
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
                                 startActivity(intent)
                             },
                             onSignOut = {

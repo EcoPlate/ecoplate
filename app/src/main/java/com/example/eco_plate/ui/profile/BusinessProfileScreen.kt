@@ -1,5 +1,9 @@
 package com.example.eco_plate.ui.profile
 
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Lock
@@ -50,6 +55,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -75,6 +81,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.eco_plate.R
 import com.example.eco_plate.ui.components.EcoColors
 import com.example.eco_plate.ui.profile.EcoImpactSection
 import com.example.eco_plate.ui.profile.StatsSection
@@ -99,17 +106,39 @@ fun BusinessProfileScreen(
     onNavigateToAddresses: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
-    onBusinessSignout: () -> Unit = {},
     onSignOut: () -> Unit = {}
 ) {
     val businessProfile by viewModel.businessProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    var showImageOptionsDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpAndSupportDialog by remember { mutableStateOf(false) }
+
+
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.updateBusinessImage(uri)
+        }
+    }
+
+    val takePicture = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            viewModel.updateBusinessImage(bitmap)
+        }
+    }
+
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
@@ -154,6 +183,7 @@ fun BusinessProfileScreen(
                             ratingText = "4.8 (32)",
                             etaText = "10–15 min",
                             deliveryText = "Free",
+                            onEditImage = { showImageOptionsDialog = true},
                             onEditEmail = { showEmailDialog = true },
                             onEditPassword = { showPasswordDialog = true }
                         )
@@ -177,9 +207,10 @@ fun BusinessProfileScreen(
                         SettingsSection(
                             onNavigateToPayments = onNavigateToPayments,
                             onNavigateToNotifications = onNavigateToNotifications,
-                            onNavigateToSupport = onNavigateToSupport,
+                            onNavigateToLanguage = { showLanguageDialog = true },
+                            onNavigateToPrivacy = onNavigateToPrivacy,
+                            onNavigateToSupport = { showHelpAndSupportDialog = true },
                             onNavigateToAbout = onNavigateToAbout,
-                            onBusinessSignout = onBusinessSignout,
                             onSignOut = { showSignOutDialog = true }
                         )
                     }
@@ -299,6 +330,43 @@ fun BusinessProfileScreen(
             }
         )
     }
+
+    if (showImageOptionsDialog) {
+        EditImageChoiceDialog(
+            onDismiss = { showImageOptionsDialog = false },
+            onChooseGallery = {
+                showImageOptionsDialog = false
+                // TODO: launch gallery picker here
+            },
+            onChooseCamera = {
+                showImageOptionsDialog = false
+                // TODO: launch camera intent here
+            }
+        )
+    }
+
+    val languageOptions = listOf(
+        LanguageOption("en", "English", R.drawable.outline_language_us_24)
+
+    )
+
+    if (showLanguageDialog) {
+        EditLanguageDialog(
+            options = languageOptions,
+            initialSelectionCode = "en",
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { code, name ->
+                showLanguageDialog = false
+            }
+        )
+    }
+
+    if (showHelpAndSupportDialog) {
+        HelpAndSupportDialog(
+            onDismiss = { showHelpAndSupportDialog = false }
+        )
+    }
+
 }
 
 @Composable
@@ -309,6 +377,7 @@ private fun ProfileHeader(
     ratingText: String? = null,
     etaText: String? = null,
     deliveryText: String? = null,
+    onEditImage: () -> Unit = {},
     onEditEmail: () -> Unit = {},
     onEditPassword: () -> Unit = {}
 ) {
@@ -351,6 +420,18 @@ private fun ProfileHeader(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
+
+                IconButton(
+                    onClick = onEditImage,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit header image"
                     )
                 }
 
@@ -426,49 +507,6 @@ private fun ProfileHeader(
                         }
                     }
                 }
-            }
-
-            Divider()
-
-
-            // Profile Picture
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(
-                        EcoColors.Green100
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = profile.name.split(" ").map { it.first() }.joinToString(""),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = EcoColors.Green600
-                )
-            }
-
-            // Name and Email
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = profile.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = profile.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = profile.memberSince,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             // Edit Profile Buttons
@@ -575,9 +613,10 @@ private fun QuickActionsSection(
 private fun SettingsSection(
     onNavigateToPayments: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToLanguage: () -> Unit,
+    onNavigateToPrivacy: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onBusinessSignout: () -> Unit,
     onSignOut: () -> Unit
 ) {
     Column(
@@ -610,13 +649,13 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Language,
                     title = "Language",
                     subtitle = "English",
-                    onClick = { }
+                    onClick = onNavigateToLanguage
                 )
                 HorizontalDivider()
                 SettingsItem(
                     icon = Icons.Outlined.Security,
                     title = "Privacy & Security",
-                    onClick = { }
+                    onClick = onNavigateToPrivacy
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -629,14 +668,6 @@ private fun SettingsSection(
                     icon = Icons.Outlined.Info,
                     title = "About",
                     onClick = onNavigateToAbout
-                )
-                // Business Account Logout -- Switch to User Account
-                HorizontalDivider()
-                SettingsItem(
-                    icon = Icons.Outlined.Logout,
-                    title = "Switch to User Account",
-                    textColor = MaterialTheme.colorScheme.error,
-                    onClick = onBusinessSignout
                 )
                 HorizontalDivider()
                 SettingsItem(
@@ -754,7 +785,7 @@ private fun EcoImpactSection(profile: BusinessProfile) {
 //////////////////////////////////////////////////////////////////
 
 private val previewBusinessProfile = BusinessProfile(
-    name = "Daniel Coop",
+    name = "Business Name",
     email = "bakery@example.com",
     phone = "604-123-4567",
     memberSince = "Member since 2021",
@@ -814,7 +845,7 @@ private fun BusinessProfileScreenContent(
         }
         item { StatsSection(profile!!) }
         item { QuickActionsSection({}, {}) }
-        item { SettingsSection({}, {}, {}, {}, {}, {}) }
+        item { SettingsSection({}, {}, {}, {}, {},  {}, {}) }
         item { EcoImpactSection(profile!!) }
     }
 }

@@ -27,6 +27,11 @@
 
     <!-- Not on Bottom Menu Fragments -->
     <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.eco_plate.ui.notifications.NotificationsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
+    <fragment
         android:id="@+id/navigation_map"
         android:name="com.example.eco_plate.ui.map.MapFragment"
         android:label="Track Delivery" />

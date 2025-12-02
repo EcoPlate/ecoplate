@@ -1,6 +1,9 @@
 package com.example.eco_plate.ui.profile
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +19,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.eco_plate.R
 import com.example.eco_plate.ui.theme.EcoPlateTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.net.toUri
 
 @AndroidEntryPoint
 class BusinessProfileFragment : Fragment() {
@@ -68,18 +72,18 @@ class BusinessProfileFragment : Fragment() {
                                     findNavController().navigate(R.id.navigation_notifications)
                                 }
                             },
+                            onNavigateToPrivacy = {
+                                // TODO: Modify Link to Vid 3
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
+                                startActivity(intent)
+                            },
                             onNavigateToSupport = {
                                 // TODO: Navigate to support screen
                             },
                             onNavigateToAbout = {
-                                // TODO: Navigate to about screen
+                                val intent = Intent(Intent.ACTION_VIEW, "https://ecoplate.github.io/ecoplate-landing/".toUri())
+                                startActivity(intent)
                             },
-
-//                            onBusinessSignup = {
-//                                val intent = android.content.Intent(requireContext(), com.example.eco_plate.ui.auth.BusinessSignupActivity::class.java)
-//                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
-//                                startActivity(intent)
-//                            },
                             onSignOut = {
                                 // Sign out and navigate to login screen
                                 viewModel.signOut()
