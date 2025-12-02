@@ -57,7 +57,7 @@ class BusinessProfileFragment : Fragment() {
                             onNavigateToOrders = {
                                 // Navigate immediately without waiting for any async operations
                                 view?.post {
-                                    findNavController().navigate(R.id.navigation_orders)
+                                    findNavController().navigate(R.id.navigation_sales)
                                 }
                             },
                             onNavigateToAddresses = {
