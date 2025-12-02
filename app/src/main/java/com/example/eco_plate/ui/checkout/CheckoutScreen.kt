@@ -1,6 +1,6 @@
 package com.example.eco_plate.ui.checkout
 
-import androidx.activity.compose.rememberLauncherForActivityResult
+// PaymentSheet imports removed for demo
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -28,7 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.eco_plate.data.models.*
 import com.example.eco_plate.utils.Resource
-import com.stripe.android.paymentsheet.PaymentSheetContract
+// import com.stripe.android.paymentsheet.PaymentSheetContract // Removed for demo
 
 // Theme colors
 private val EcoGreen600 = Color(0xFF16A34A)
@@ -46,19 +46,9 @@ fun CheckoutScreen(
     val tipAmount by viewModel.tipAmount.collectAsState()
     val customerNotes by viewModel.customerNotes.collectAsState()
 
-    val paymentSheetLauncher = rememberLauncherForActivityResult(
-        contract = PaymentSheetContract()
-    ) { result ->
-        viewModel.handlePaymentResult(result)
-    }
-
+    // For demo: Skip PaymentSheet, payment is confirmed automatically
     LaunchedEffect(paymentState) {
         when (val state = paymentState) {
-            is PaymentState.ReadyToPay -> {
-                paymentSheetLauncher.launch(
-                    PaymentSheetContract.Args.createPaymentIntentArgs(state.clientSecret)
-                )
-            }
             is PaymentState.Success -> {
                 onOrderSuccess(state.orders)
             }

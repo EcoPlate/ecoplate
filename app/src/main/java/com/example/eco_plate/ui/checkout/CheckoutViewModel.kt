@@ -120,11 +120,9 @@ class CheckoutViewModel @Inject constructor(
                         result.data?.let { data ->
                             currentPaymentIntentId = data.paymentIntentId
                             currentClientSecret = data.clientSecret
-                            _paymentState.value = PaymentState.ReadyToPay(
-                                clientSecret = data.clientSecret,
-                                amount = data.amount
-                            )
                             Log.d(TAG, "Payment intent ready: ${data.paymentIntentId}")
+                            // Skip PaymentSheet for demo - directly confirm payment
+                            confirmPaymentOnBackend()
                         } ?: run {
                             _paymentState.value = PaymentState.Error("Failed to create payment")
                         }
