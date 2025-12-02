@@ -223,8 +223,7 @@ fun ModernHomeScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                //text = "123 Main Street, Vancouver",
-                                text = deliveryAddress,
+                                text = deliveryAddress ?: "Add delivery address",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
