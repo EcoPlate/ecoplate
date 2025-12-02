@@ -148,6 +148,12 @@ object NetworkModule {
         return retrofit.create(OrderApi::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideAddressApi(retrofit: Retrofit): AddressApi {
+        return retrofit.create(AddressApi::class.java)
+    }
+
     // Open Food Facts API for barcode lookup (no auth required)
     @Provides
     @Singleton
